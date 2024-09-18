@@ -1,0 +1,44 @@
+{
+  "name": "doctor-appointment-api",
+  "version": "1.0.0",
+  "description": "Doctor Appointment API This repository contains the backend API for a doctor appointment booking system. It provides endpoints for users to: Create new appointments Retrieve their existing appointments Update appointment details Cancel appointments.",
+  "main": "server.js",
+  "scripts": {
+    "start": "NODE_ENV=production node src/server.js",
+    "dev": "NODE_ENV=dev nodemon src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/musabibr/doctor-appointment-api.git"
+  },
+  "author": "musab ibrahim",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/musabibr/doctor-appointment-api/issues"
+  },
+  "homepage": "https://github.com/musabibr/doctor-appointment-api#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.5.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.6.3",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "validator": "^13.12.0",
+    "winston": "^3.14.2",
+    "xss": "^1.0.15",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.5"
+  }
+}
