@@ -1,4 +1,4 @@
-require('../db_config/db');
+require('./db_config/db');
 const express = require("express");
 const cors = require('cors');
 const morgan = require('morgan');
@@ -6,7 +6,6 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const patientRouter = require('../domains/patient/routes/patientRouter');
 //rate limit
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -44,7 +43,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use(limiter);
-app.use('/api/v1/patient', patientRouter);
 // Assuming app.listen or further setup happens below this point
 
 app.all('*', (req, res, next) => {

@@ -83,3 +83,5 @@ exports.uploadMultipleImages = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 }
+
+patientRepository.js,doctorRepository.js,appointmentRepository.js
