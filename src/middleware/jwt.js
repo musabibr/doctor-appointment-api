@@ -1,17 +1,17 @@
-const jwt = require('jsonwebtoken');
+// utils/jwtHelper.js
+const jwt = require("jsonwebtoken");
 
-const createToken = (payload) => {
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
-    return token;
-};
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key"; // Add this secret key to your .env file
 
-const verifyToken = (token) => {
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        return decoded;
-    } catch (error) {
-        return null;
+class JWTUtil {
+    static generateToken(patient) {
+        const payload = { id: patient._id, email: patient.email };
+        return jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
     }
-};
 
-module.exports = { createToken, verifyToken }
+    static verifyToken(token) {
+        return jwt.verify(token, JWT_SECRET);
+    }
+}
+
+module.exports = JWTUtil;

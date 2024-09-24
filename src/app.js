@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
+const patientRoutes = require('./routes/patientRoutes');
 //rate limit
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -43,7 +44,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use(limiter);
-// Assuming app.listen or further setup happens below this point
+app.use('/api/v1/patients',patientRoutes)
 
 app.all('*', (req, res, next) => {
     res.status(404 || 401).json({
