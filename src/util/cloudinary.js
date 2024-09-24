@@ -1,6 +1,5 @@
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
-const fileType = require("file-type");
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

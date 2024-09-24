@@ -84,4 +84,3 @@ exports.uploadMultipleImages = async (req, res) => {
     }
 }
 
-patientRepository.js,doctorRepository.js,appointmentRepository.js

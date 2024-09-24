@@ -1,11 +1,12 @@
 require('./db_config/db');
 const express = require("express");
 const cors = require('cors');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
+const bodyParser = require('body-parser');
+const multer = require('multer');
 const patientRoutes = require('./routes/patientRoutes');
 //rate limit
 const limiter = rateLimit({
@@ -36,12 +37,12 @@ const corsOptions = {
 //creating the app
 const app = express();
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cors({origin:'*', credentials: true}));
 app.use(helmet());
 app.use(hpp());
 app.use(mongoSanitize());
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use(limiter);
 app.use('/api/v1/patients',patientRoutes)
