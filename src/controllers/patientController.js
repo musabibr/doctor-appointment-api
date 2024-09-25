@@ -155,7 +155,7 @@ const validateImage = (file) => {
             "imgPId",
             "__v",
         ]);
-        const token = JWTUtil.generateToken(patient);
+        const token = JWTUtil.generateToken(patient.toObject());
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -166,7 +166,9 @@ const validateImage = (file) => {
         req.patient = sanitizedPatient;
         response(res, 200, "success", "Logged in successfully", sanitizedPatient);
         } catch (error) {
-        response(res, 500, "fail", "Login failed");
+            console.log(error);
+            
+            return response(res, 500, "fail", "Login failed");
         }
         next();
     }
