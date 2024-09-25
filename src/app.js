@@ -8,6 +8,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const patientRoutes = require('./routes/patientRoutes');
+const redisClient = require('./db_config/redis_config');
 //rate limit
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -45,7 +46,16 @@ app.use(hpp());
 app.use(mongoSanitize());
 app.use(morgan('dev'));
 app.use(limiter);
-app.use('/api/v1/patients',patientRoutes)
+app.use('/api/v1/patients', patientRoutes)
+
+
+redisClient.connect();
+redisClient.on('connect', () => {
+    console.log('Redis connected');
+})
+redisClient.on('error', (err) => {
+    console.log('Redis connection error:', err);
+});
 
 app.all('*', (req, res, next) => {
     res.status(404 || 401).json({
