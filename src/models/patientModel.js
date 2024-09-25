@@ -26,6 +26,18 @@ const patientSchema = new mongoose.Schema({
     imgPId: {
         type:String,
     },
+    location: {
+        state: { type: String },
+        city: { type: String },
+        area: { type: String },
+    },
+    preferences: {
+        specialties: [
+            {
+                specialty: { type: mongoose.Schema.Types.ObjectId, ref: "Specialty" },
+            },
+        ],
+    },
     appointments: [
         {
             doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor" },
