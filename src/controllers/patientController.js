@@ -170,7 +170,7 @@ const validateImage = (file) => {
             
             return response(res, 500, "fail", "Login failed");
         }
-        next();
+        // next();
     }
 
     async protected(req, res, next) {
