@@ -8,10 +8,11 @@ class PatientRepository {
     }
 
     async findById(patientId) {
-        return await Patient.findById(patientId).populate({
-            path: "appointments.doctor",
-            select: "name specialization", // You can specify which fields to populate from the Doctor model
-        });
+        return await Patient.findById(patientId)
+        //     .populate({
+        //     path: "appointments.doctor",
+        //     select: "name specialization", // You can specify which fields to populate from the Doctor model
+        // });
     }
 
     async findByEmail(email) {
@@ -23,10 +24,11 @@ class PatientRepository {
     }
 
     async update(patientId, updateData) {
-        return await Patient.findByIdAndUpdate(patientId, updateData, { new: true }).populate({
-            path: "appointments.doctor",
-            select: "name specialization",
-        });
+        return await Patient.findByIdAndUpdate(patientId, updateData, { new: true })
+    //         .populate({
+    //         path: "appointments.doctor",
+    //         select: "name specialization",
+    //     });
     }
 
     async delete(patientId) {

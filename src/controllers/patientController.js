@@ -100,7 +100,7 @@ const validateImage = (file) => {
             "imgPId",
             "__v",
         ]);
-        const token = JWTUtil.generateToken(patient);
+        const token = JWTUtil.generateToken(patient.toObject());
 
         res.cookie("token", token, {
             httpOnly: true,

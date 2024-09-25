@@ -32,6 +32,6 @@ router.post("/login", patientController.login);
 router.post("/logout", patientController.logout);
 
 // Protected Routes - Require JWT authentication
-router.patch("/update/:id", patientController.protected, patientController.updatePatient);
+router.patch("/update/:id", upload.single("image"),patientController.protected,patientController.updatePatient);
 
 module.exports = router;
