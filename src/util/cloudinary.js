@@ -10,7 +10,7 @@ cloudinary.config({
 
 // Maximum retry attempts
 const MAX_RETRIES = 3;
-const DEFAULT_RETRY_DELAY = 1000; // Default retry delay in milliseconds
+const DEFAULT_RETRY_DELAY = 1000*60; // Default retry delay in milliseconds
 // Helper function to retry upload with exponential backoff
 const retryUpload = async (imageBuffer, imageName, retries = MAX_RETRIES, delay = DEFAULT_RETRY_DELAY) => {
     for (let attempt = 1; attempt <= retries; attempt++) {
@@ -85,3 +85,5 @@ module.exports = {
     uploadMultipleImages,
     retryUpload,  // Expose this function for testing or individual uploads
 };
+
+// 

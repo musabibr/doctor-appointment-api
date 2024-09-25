@@ -1,6 +1,7 @@
 const patientService = require("../services/patientService");
 const validator = require("validator");
 const path = require("path");
+const _ = require("lodash");
 const response = require("../middleware/response");
 const JWTUtil = require("../middleware/jwt");
 const { uploadSingleImage } = require("../util/cloudinary");
@@ -109,15 +110,15 @@ class PatientController {
                     await patient.save();
                     req.body.id = undefined;
                 }
-                patient.password = undefined;
-                patient.__v = undefined;
+                const sanitizedPatient = _.omit(patient.toObject(), ["password", "imgPId","__v"]);
                 const token = JWTUtil.generateToken(patient);
+                
                 res.cookie("token", token, {
                     httpOnly: true, // Ensure it's accessible only via HTTP (not client-side JS)
                     secure: process.env.NODE_ENV === "production", // Set secure only in production
                     maxAge: 3600000 * 24 * 30 // 30 days expiration
                 })
-                response(res, 201, 'success', 'Patient registered successfully', patient);
+                response(res, 201, 'success', 'Patient registered successfully', sanitizedPatient);
             } catch (error) {
                 console.log('====================================');
                 console.log(error);
@@ -125,7 +126,7 @@ class PatientController {
                 response(res,500,'fail','something went wrong');
         }
     }
-    async login(req, res) {
+    async login(req, res,next) {
         let { email, password } = req.body;
         if(!email || !password) {
             return response(res,400,'fail',`please fill all the required fields: ${!email ? "email! " : ""} ${!password ? "password!" : ""}`);
@@ -146,8 +147,7 @@ class PatientController {
             if(!isMatch) {
                 return response(res,400,'fail','Invalid credentials');
             }
-            patient.password = undefined;
-            patient.__v = undefined;
+            const sanitizedPatient = _.omit(patient.toObject(), ["password", "imgPId","__v"]);
             const token = JWTUtil.generateToken(patient);
             // Set token as a cookie
             res.cookie("token", token, {
@@ -155,12 +155,58 @@ class PatientController {
                 secure: process.env.NODE_ENV === "production", // Set secure only in production 
                 maxAge: 3600000 // 1 hour expiration
             });
-            response(res, 200, 'success', 'Patient logged in successfully', patient);
+            req.patient = sanitizedPatient
+            response(res, 200, 'success', 'Patient logged in successfully', sanitizedPatient);
             
         } catch (error) {
             res.status(400).json({ error: error.message });
         }
+        next()
     }
+    
+    async protected(req, res, next) {
+    let token, patient, id ,sanitizedPatient;
+    try {
+        // Check if authorization header exists
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            // Extract token from Authorization header
+            token = req.headers.authorization.split(' ')[1];
+
+            // Verify the JWT token
+            const decodedToken = JWTUtil.verifyToken(token);
+
+            // Get patient ID from decoded token
+            id = decodedToken._id;
+
+            // Fetch the patient details from the database
+            patient = await patientService.getPatientById(id);
+
+            // If the patient doesn't exist, return an unauthorized error
+            if (!patient) {
+                return response(res, 401, 'fail', 'Unauthorized: Patient not found');
+            }
+        } else {
+            // If Authorization header is missing or doesn't start with 'Bearer', return unauthorized
+            return response(res, 401, 'fail', 'Unauthorized: Missing or invalid token');
+        }
+        sanitizedPatient = _.omit(patient.toObject(), ["password", "imgPId", "__v"]);
+        res.cookie("token", token, {
+            httpOnly: true, // Ensure it's accessible only via HTTP (not client-side JS)
+            secure: process.env.NODE_ENV === "production", // Set secure only in production
+            maxAge: 3600000 * 24 * 30 // 30 days expiration
+        })
+    } catch (error) {
+        // If token verification fails or any other error occurs, log the error and respond with 500
+        console.error('Error in token validation:', error.message);
+        return response(res, 500, 'fail', 'Something went wrong: ' + error.message);
+    }
+
+    // Attach the patient object to the request for further use in the next middleware or route
+    req.patient = sanitizedPatient; 
+
+    // Proceed to the next middleware or route handler
+    next();
+}
 
     async getPatient(req, res) {
         try {
@@ -174,7 +220,9 @@ class PatientController {
         }
     }
 
+
     async updatePatient(req, res) {
+    
         try {
             const patient = await patientService.updatePatient(req.params.id, req.body);
             if (!patient) {

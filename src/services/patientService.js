@@ -11,18 +11,12 @@ class PatientService {
         return await patientRepository.create(patientData);
     }
 
-    async loginPatient(email, password) {
+    async loginPatient(email) {
         const patient = await patientRepository.findByEmail(email);
         if (!patient) {
             return 404;
-            // throw new Error("Patient not found");
         }
-        const isMatch = await patient.comparePassword(password);
-        if (!isMatch) {
-            throw new Error("Invalid password");
-        }
-        const token = JWTUtil.generateToken(patient);
-        return { patient, token }; // Return token and patient info
+        return patient // Return token and patient info
     }
 
     async getPatientById(patientId) {

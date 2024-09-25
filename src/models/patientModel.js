@@ -23,6 +23,9 @@ const patientSchema = new mongoose.Schema({
         type: String, 
         default: "https://example.com/default-image.jpg" // Replace with your default image URL
     },
+    imgPId: {
+        type:String,
+    },
     appointments: [
         {
             doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor" },
@@ -39,19 +42,6 @@ const patientSchema = new mongoose.Schema({
     toObject: { virtuals: true },
     toJSON: { virtuals: true }
 });
-
-// Pre-save hook to hash password before saving
-patientSchema.pre("save", async function (next) {
-    if (this.isModified("password")) {
-        this.password = await bcrypt.hash(this.password, 10);
-    }
-    next();
-});
-
-// Instance method to compare password
-patientSchema.methods.comparePassword = function (candidatePassword) {
-    return bcrypt.compare(candidatePassword, this.password);
-};
 
 const Patient = mongoose.model("Patient", patientSchema);
 
