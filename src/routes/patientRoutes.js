@@ -32,8 +32,6 @@ router.post("/login", patientController.login);
 router.post("/logout", patientController.logout);
 
 // Protected Routes - Require JWT authentication
-router.get("/:id", authMiddleware, patientController.getPatient);
-router.put("/:id", authMiddleware, patientController.updatePatient);
-router.delete("/:id", authMiddleware, patientController.deletePatient);
+router.put("/:id", patientController.protected, patientController.updatePatient);
 
 module.exports = router;
