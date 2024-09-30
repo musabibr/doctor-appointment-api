@@ -30,6 +30,10 @@ class PatientRepository {
     //         select: "name specialization",
     //     });
     }
+    // New: Find by reset token
+    async findByResetToken(token) {
+        return await Patient.findOne({ resetToken: token });
+    }
 
     async delete(patientId) {
         return await Patient.findByIdAndDelete(patientId);

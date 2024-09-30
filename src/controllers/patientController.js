@@ -215,10 +215,10 @@ const validateImage = (file) => {
     async logout(req, res) {
         try {
         const token = req.headers.authorization.split(" ")[1];
-        const decodedToken = JWTUtil.decodeToken(token);
-        const timeRemaining = decodedToken.exp - Math.floor(Date.now() / 1000);
+        const decodedToken = await JWTUtil.verifyToken(token);
+        const timeRemaining = 1 || decodedToken.exp - Math.floor(Date.now() / 1000);
 
-        await JWTUtil.blacklistToken(token, timeRemaining);
+        await JWTUtil.blacklistToken(token,timeRemaining );
         logger.info("Token blacklisted successfully");
 
         response(res, 200, "success", "Logged out and token blacklisted");
@@ -298,6 +298,92 @@ const validateImage = (file) => {
         response(res, 500, "fail", `Something went wrong: ${error.message}`);
         }
     }
+    // New: Update Password
+    async updatePassword(req, res) {
+        try {
+            const { oldPassword, newPassword } = req.body;
+
+            if (!req.patient) {
+                return response(res, 401, "fail", "Unauthorized: Patient not found");
+            }
+
+            if (!oldPassword || !newPassword || newPassword.length < 8) {
+                return response(res, 400, "fail", "Invalid input: Password must be at least 8 characters");
+            }
+
+            const patient = await patientService.getPatientById(req.patient._id);
+            if (!patient) {
+                return response(res, 404, "fail", "Patient not found");
+            }
+
+            const isMatch = await compareData(oldPassword, patient.password);
+            if (!isMatch) {
+                return response(res, 400, "fail", "Old password is incorrect");
+            }
+
+            const encryptedNewPassword = await encryptData(newPassword);
+            await patientService.updatePatient(req.patient._id, { password: encryptedNewPassword });
+
+            response(res, 200, "success", "Password updated successfully");
+        } catch (error) {
+            logger.error(`Password update failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+    // New: Forgot Password - Send Reset Token
+    async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+
+            if (!email || !validator.isEmail(email)) {
+                return response(res, 400, "fail", "Valid email is required");
+            }
+
+            const patient = await patientService.getPatientByEmail(email);
+            if (!patient) {
+                return response(res, 404, "fail", "No account found with this email");
+            }
+
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiration
+
+            await patientService.updatePatient(patient._id, { resetToken, resetTokenExpiry });
+
+            // Here you should send the resetToken via email to the patient (implementation depends on your email service)
+            logger.info(`Reset token generated for ${email}: ${resetToken}`);
+
+            response(res, 200, "success", "Password reset token sent to email");
+        } catch (error) {
+            logger.error(`Forgot password failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+    // New: Reset Password using the Token
+    async resetPassword(req, res) {
+        try {
+            const { token, newPassword } = req.body;
+
+            if (!token || !newPassword || newPassword.length < 8) {
+                return response(res, 400, "fail", "Invalid input: Token and password must be provided, password must be at least 8 characters");
+            }
+
+            const patient = await patientService.getPatientByResetToken(token);
+            if (!patient || patient.resetTokenExpiry < Date.now()) {
+                return response(res, 400, "fail", "Invalid or expired token");
+            }
+
+            const encryptedNewPassword = await encryptData(newPassword);
+            await patientService.updatePatient(patient._id, { password: encryptedNewPassword, resetToken: null, resetTokenExpiry: null });
+
+            response(res, 200, "success", "Password reset successfully");
+        } catch (error) {
+            logger.error(`Password reset failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
 }
 
+// Exporting the PatientController
 module.exports = new PatientController();

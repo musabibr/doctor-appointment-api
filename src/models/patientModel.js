@@ -31,6 +31,8 @@ const patientSchema = new mongoose.Schema({
         city: { type: String },
         area: { type: String },
     },
+    resetToken: { type: String },
+    resetTokenExpiry:{type:Date},
     preferences: {
         specialties: [
             {
