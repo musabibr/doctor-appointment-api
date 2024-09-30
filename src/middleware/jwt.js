@@ -39,7 +39,7 @@ const JWTUtil = {
     blacklistToken: async (token, expiration) => {
         try {
             // Store the token in Redis with the same expiration time as the JWT
-            await redisClient.set(`blacklist_${token}`, true, {
+            await redisClient.set(`blacklist_${token}`, 'true', {
                 EX: expiration, // Set expiry in seconds
             });
         } catch (error) {
