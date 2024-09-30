@@ -7,6 +7,8 @@ const JWTUtil = require("../middleware/jwt");
 const { uploadSingleImage } = require("../util/cloudinary");
 const { encryptData, compareData } = require("../util/hashData");
 const logger = require("../util/logger");
+const crypto = require("crypto");
+const emailService = require("../util/emailService");
 
 // Allowed image types
 const allowedImageTypes = [".jpg", ".jpeg", ".png"];
@@ -298,7 +300,7 @@ const validateImage = (file) => {
         response(res, 500, "fail", `Something went wrong: ${error.message}`);
         }
     }
-    // New: Update Password
+    //Update Password
     async updatePassword(req, res) {
         try {
             const { oldPassword, newPassword } = req.body;
@@ -331,7 +333,8 @@ const validateImage = (file) => {
         }
     }
 
-    // New: Forgot Password - Send Reset Token
+
+    // Forgot Password
     async forgotPassword(req, res) {
         try {
             const { email } = req.body;
@@ -350,8 +353,8 @@ const validateImage = (file) => {
 
             await patientService.updatePatient(patient._id, { resetToken, resetTokenExpiry });
 
-            // Here you should send the resetToken via email to the patient (implementation depends on your email service)
-            logger.info(`Reset token generated for ${email}: ${resetToken}`);
+            // Send the email with the reset token
+            await emailService.sendResetToken(email, resetToken);
 
             response(res, 200, "success", "Password reset token sent to email");
         } catch (error) {
@@ -360,7 +363,8 @@ const validateImage = (file) => {
         }
     }
 
-    // New: Reset Password using the Token
+
+    //Reset Password using the Token
     async resetPassword(req, res) {
         try {
             const { token, newPassword } = req.body;
@@ -385,5 +389,4 @@ const validateImage = (file) => {
     }
 }
 
-// Exporting the PatientController
 module.exports = new PatientController();
