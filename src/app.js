@@ -6,7 +6,6 @@ const hpp = require('hpp');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const bodyParser = require('body-parser');
-const multer = require('multer');
 const patientRoutes = require('./routes/patientRoutes');
 const redisClient = require('./db_config/redis_config');
 const doctorRoutes = require('./routes/doctorRoutes');
