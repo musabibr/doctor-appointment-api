@@ -31,7 +31,7 @@ class DoctorService {
         const doctor = await doctorRepository.findDoctorById(doctorId);
         if (!doctor) throw new Error("Doctor not found.");
         
-        if (doctor.otpRetries >= this.MAX_OTP_RETRIES) {
+        if (doctor.otpRetries >= this.MAX_OTP_RETRIES) { 
             throw new Error("Maximum OTP retries exceeded.");
         }
         
