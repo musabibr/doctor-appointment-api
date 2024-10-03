@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const patientRoutes = require('./routes/patientRoutes');
 const redisClient = require('./db_config/redis_config');
+const doctorRoutes = require('./routes/doctorRoutes');
 //rate limit
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -47,6 +48,7 @@ app.use(mongoSanitize());
 app.use(morgan('dev'));
 app.use(limiter);
 app.use('/api/v1/patients', patientRoutes)
+app.use('/api/v1/doctors', doctorRoutes)
 
 
 redisClient.connect();
