@@ -1,6 +1,6 @@
 // services/doctorService.js
 const doctorRepository = require("../../repositories/doctor/doctorRepository");
-const otpService = require("./otpService"); // Placeholder for OTP handling logic
+const otpService = require("../../util/emailService"); // Placeholder for OTP handling logic
 
 class DoctorService {
     constructor() {
@@ -10,7 +10,7 @@ class DoctorService {
     async registerDoctor(doctorData) {
         const existingDoctor = await doctorRepository.findDoctorByEmail(doctorData.email);
         if (existingDoctor) {
-            throw new Error("Doctor with this email already exists.");
+            return 'exist';
         }
         return doctorRepository.createDoctor(doctorData);
     }
@@ -31,7 +31,7 @@ class DoctorService {
         const doctor = await doctorRepository.findDoctorById(doctorId);
         if (!doctor) throw new Error("Doctor not found.");
         
-        if (doctor.otpRetries >= this.MAX_OTP_RETRIES) {
+        if (doctor.otpRetries >= this.MAX_OTP_RETRIES) { 
             throw new Error("Maximum OTP retries exceeded.");
         }
         

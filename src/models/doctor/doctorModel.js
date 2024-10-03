@@ -1,8 +1,4 @@
 const mongoose = require("mongoose");
-const availabilitySchema = require("./availabilityModel");
-const ratingSchema = require("./ratingsModel"); // Fixed typo
-const clinicSchema = require("./clinicModel");
-
 // Doctor Schema
 const doctorSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -35,8 +31,30 @@ const doctorSchema = new mongoose.Schema({
     about: { type: String },
 
     // Embedding Clinic and Availability as separate schemas
-    clinic: clinicSchema,
-    availability: availabilitySchema,
+    clinic: {
+        name: { type: String },
+        location: {
+            state: { type: String },
+            city: { type: String },
+        }
+    },
+    availability: {
+        dates: [
+            { type: Date }
+        ],
+        days: [
+            {
+                type: String,
+                enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            }
+        ],
+        hours: [
+            {
+                start: { type: String },  // Simple String without validation
+                end: { type: String },    // Simple String without validation
+            }
+        ],
+    },
 
     price: { type: Number, required: true },
     discount: { type: Number },
@@ -46,12 +64,12 @@ const doctorSchema = new mongoose.Schema({
         enum: ["true", "false", "pending"],
         default: "pending",
     },
-    otpRetries:{type:Number},
-    isVerified:{type:Boolean},
+    otpRetries: { type: Number },
+    isVerified: { type: Boolean },
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
     // Referencing Ratings and Appointments
-    ratings: [ratingSchema],
+    ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }],
     appointments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
 }, {
     timestamps: true,

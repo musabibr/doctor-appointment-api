@@ -7,6 +7,8 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const bodyParser = require('body-parser');
 const patientRoutes = require('./routes/patientRoutes');
+
+const doctorRoutes = require('./routes/doctorRoutes');
 const {redisClient} = require('./db_config/redis_config');
 //rate limit
 const limiter = rateLimit({
@@ -46,6 +48,7 @@ app.use(mongoSanitize());
 app.use(morgan('dev'));
 app.use(limiter);
 app.use('/api/v1/patients', patientRoutes)
+app.use('/api/v1/doctors', doctorRoutes)
 
 
 redisClient.connect();

@@ -28,8 +28,8 @@ class DoctorRepository {
         return Doctor.find(criteria).populate('clinic').populate('availability').exec();
     }
 
-    async findDoctorByPhoneNumber(phoneNumber) {
-        return Doctor.findOne({ phoneNumber }).exec();
+    async findDoctorRatings(doctorId) {
+        return Doctor.findById(doctorId).populate('ratings').exec();
     }
 }
 
