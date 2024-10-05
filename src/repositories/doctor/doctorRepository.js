@@ -1,36 +1,47 @@
 // repositories/doctorRepository.js
 const Doctor = require("../../models/doctor/doctorModel");
+const OtpModel = require('../../models/otpModel');
 
 class DoctorRepository {
-    async createDoctor(doctorData) {
-        const doctor = new Doctor(doctorData);
-        return doctor.save();
+    // Find doctor by email
+    async findByEmail(email) {
+        return await Doctor.findOne({ email });
     }
 
-    async findDoctorById(doctorId) {
-        return Doctor.findById(doctorId).populate('appointments').populate('ratings').exec();
+    // Save a new doctor to the database
+    async create(doctorData) {
+        return await Doctor.create(doctorData);
     }
 
-    async findDoctorByEmail(email) {
-        return Doctor.findOne({ email }).exec();
+    // Update doctor's verification status
+    async verifyDoctor(email) {
+        return await Doctor.findOneAndUpdate({ email }, { isVerified: true }, { new: true });
     }
 
-    async updateDoctorById(doctorId, updateData) {
-        return Doctor.findByIdAndUpdate(doctorId, updateData, { new: true }).exec();
+    // Check if a doctor exists by email
+    async existsByEmail(email) {
+        return await Doctor.exists({ email });
     }
 
-    async deleteDoctorById(doctorId) {
-        return Doctor.findByIdAndDelete(doctorId).exec();
+    // Find OTP entry by email
+    async findOtpByEmail(email) {
+        return await OtpModel.findOne({ email }).sort({ createdAt: -1 }); // Fetch latest OTP
     }
 
-    async findDoctors(criteria) {
-        // Example of dynamic filtering based on multiple fields
-        return Doctor.find(criteria).populate('clinic').populate('availability').exec();
+    // Update OTP retries
+    async incrementOtpRetries(email) {
+        return await OtpModel.findOneAndUpdate(
+            { email },
+            { $inc: { retries: 1 } },
+            { new: true }
+        );
     }
 
-    async findDoctorRatings(doctorId) {
-        return Doctor.findById(doctorId).populate('ratings').exec();
+    // Delete OTP by email
+    async deleteOtpByEmail(email) {
+        return await OtpModel.deleteMany({ email });
     }
 }
 
 module.exports = new DoctorRepository();
+

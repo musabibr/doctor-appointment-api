@@ -56,9 +56,9 @@ const doctorSchema = new mongoose.Schema({
         ],
     },
 
-    price: { type: Number, required: true },
+    price: { type: Number },
     discount: { type: Number },
-    isAvailable: { type: Boolean, default: true },
+    isAvailable: { type: Boolean, default: false },
     isApproved: {
         type: String,
         enum: ["true", "false", "pending"],
