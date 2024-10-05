@@ -216,6 +216,86 @@ class DoctorController {
             return response(res, 500, 'fail', 'Error verifying OTP.');
         }
     }
+    // Add Availability
+    async addAvailability(req, res) {
+        const { doctorId, date, hours, maxPatients } = req.body;
+
+        if (!doctorId || !date || !hours || !Array.isArray(hours)) {
+            return response(res, 400, 'fail', 'Doctor ID, date, and hours are required.');
+        }
+
+        if (!validator.isDate(date)) {
+            return response(res, 400, 'fail', 'Invalid date format.');
+        }
+
+        if (hours.some(hour => !hour.start || !hour.end || !/^\d{2}:\d{2}$/.test(hour.start) || !/^\d{2}:\d{2}$/.test(hour.end))) {
+            return response(res, 400, 'fail', 'Invalid time format for hours. Use HH:MM.');
+        }
+
+        try {
+            const availability = await doctorService.addAvailability(doctorId, { date, hours, maxPatients });
+            return response(res, 201, 'success', 'Availability added successfully', availability);
+        } catch (error) {
+            return response(res, 500, 'fail', `Failed to add availability: ${error.message}`);
+        }
+    }
+
+    // Update Availability
+    async updateAvailability(req, res) {
+        const { doctorId, availabilityId, date, hours, maxPatients } = req.body;
+
+        if (!doctorId || !availabilityId || !date || !hours || !Array.isArray(hours)) {
+            return response(res, 400, 'fail', 'Doctor ID, availability ID, date, and hours are required.');
+        }
+
+        if (!validator.isDate(date)) {
+            return response(res, 400, 'fail', 'Invalid date format.');
+        }
+
+        if (hours.some(hour => !hour.start || !hour.end || !/^\d{2}:\d{2}$/.test(hour.start) || !/^\d{2}:\d{2}$/.test(hour.end))) {
+            return response(res, 400, 'fail', 'Invalid time format for hours. Use HH:MM.');
+        }
+
+        try {
+            const availability = await doctorService.updateAvailability(doctorId, availabilityId, { date, hours, maxPatients });
+            return response(res, 200, 'success', 'Availability updated successfully', availability);
+        } catch (error) {
+            return response(res, 500, 'fail', `Failed to update availability: ${error.message}`);
+        }
+    }
+
+    // Delete Availability
+    async deleteAvailability(req, res) {
+        const { doctorId, availabilityId } = req.body;
+
+        if (!doctorId || !availabilityId) {
+            return response(res, 400, 'fail', 'Doctor ID and availability ID are required.');
+        }
+
+        try {
+            await doctorService.deleteAvailability(doctorId, availabilityId);
+            return response(res, 200, 'success', 'Availability deleted successfully');
+        } catch (error) {
+            return response(res, 500, 'fail', `Failed to delete availability: ${error.message}`);
+        }
+    }
+
+    // Get Availability
+    async getAvailability(req, res) {
+        const { doctorId } = req.params;
+
+        if (!doctorId) {
+            return response(res, 400, 'fail', 'Doctor ID is required.');
+        }
+
+        try {
+            const availability = await doctorService.getAvailability(doctorId);
+            return response(res, 200, 'success', 'Availability retrieved successfully', availability);
+        } catch (error) {
+            return response(res, 500, 'fail', `Failed to retrieve availability: ${error.message}`);
+        }
+    }
 }
+
 
 module.exports = new DoctorController();

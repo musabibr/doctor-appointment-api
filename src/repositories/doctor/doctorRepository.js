@@ -7,7 +7,16 @@ class DoctorRepository {
     async findByEmail(email) {
         return await Doctor.findOne({ email });
     }
-
+    
+    // Find doctor by id
+    async findDoctorById(id) {
+        return await Doctor.findDoctorById(id);
+    }
+    
+    // Find doctor by query
+    async findDoctor(query) {
+        return await Doctor.find(query);
+    }
     // Save a new doctor to the database
     async create(doctorData) {
         return await Doctor.create(doctorData);
