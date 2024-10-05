@@ -1,3 +1,4 @@
+const { max } = require("lodash");
 const mongoose = require("mongoose");
 // Doctor Schema
 const doctorSchema = new mongoose.Schema({
@@ -38,27 +39,30 @@ const doctorSchema = new mongoose.Schema({
             city: { type: String },
         }
     },
-    availability: {
-        dates: [
-            { type: Date }
-        ],
-        days: [
-            {
+    availability: [
+        {
+            date: { type: Date },
+            day: {
                 type: String,
-                enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-            }
-        ],
-        hours: [
-            {
-                start: { type: String },  // Simple String without validation
-                end: { type: String },    // Simple String without validation
-            }
-        ],
-    },
+                set: function(v) {
+                    const date = new Date(v);
+                    return date.toLocaleString('en-US', { weekday: 'long' });
+                }
+            },
+            hours: [
+                {
+                    start: { type: String },  // Simple String without validation
+                    end: { type: String },    // Simple String without validation
+                    maxPatients: { type: Number },
+                    currentPatients: { type: Number },
+                },
+            ],
+            isAvailable: { type: Boolean,default:true },
+        }
+    ],
 
     price: { type: Number },
     discount: { type: Number },
-    isAvailable: { type: Boolean, default: false },
     isApproved: {
         type: String,
         enum: ["true", "false", "pending"],

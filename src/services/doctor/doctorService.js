@@ -88,6 +88,145 @@ class DoctorService {
         await doctorRepository.deleteOtpByEmail(email); // Remove OTP after successful verification
         return { valid: true, message: 'OTP verified successfully. Your account is now active.' };
     }
+    // Add Availability
+    async addAvailability(doctorId, availabilities) {
+        const doctor = await doctorRepository.findDoctorById(doctorId);
+
+        if (!doctor) {
+            throw new Error("Doctor not found");
+        }
+
+        const newAvailabilities = availabilities.map(availability => ({
+            date: availability.date,
+            hours: availability.hours.map(hour => ({
+                start: hour.start,
+                end: hour.end,
+                maxPatients: availability.maxPatients,
+                currentPatients: 0
+            })),
+            isAvailable: true // Initially, the slot is available
+        }));
+
+        doctor.availability.push(...newAvailabilities);
+
+        await doctor.save();
+        return doctor.availability;
+        // const availability = {
+        //     date,
+        //     hours: hours.map(hour => ({
+        //         start: hour.start,
+        //         end: hour.end,
+        //         maxPatients: maxPatients,
+        //         currentPatients: 0
+        //     })),
+        //     isAvailable: true // Initially, the slot is available
+        // };
+
+        // const doctor = await doctorRepository.findDoctorById(doctorId);
+        // doctor.availability.push(availability);
+        // await doctor.save();
+
+        // return availability;
+    }
+
+    // Update Availability
+    async updateAvailability(doctorId, availabilityId, { date, hours, maxPatients }) {
+        const doctor = await doctorRepository.findDoctorById(doctorId);
+
+        const availability = doctor.availability.id(availabilityId);
+        if (!availability) {
+            throw new Error("Availability not found");
+        }
+
+        availability.date = date;
+        availability.hours = hours.map(hour => ({
+            start: hour.start,
+            end: hour.end,
+            maxPatients: maxPatients || 1,
+            currentPatients: availability.currentPatients || 0 // Keep current patients if exists
+        }));
+
+        // Update `isAvailable` if current time is past availability
+        availability.isAvailable = this.checkAvailabilityStatus(availability.hours, availability.maxPatients, availability.currentPatients);
+
+        await doctor.save();
+        return availability;
+    }
+
+    // Delete Availability
+    async deleteAvailability(doctorId, availabilityId) {
+        const doctor = await doctorRepository.findDoctorById(doctorId);
+        doctor.availability.id(availabilityId).remove();
+        await doctor.save();
+    }
+
+    // Get Availability
+    async getAvailability(doctorId) {
+        const doctor = await doctorRepository.findDoctorById(doctorId);
+        return doctor.availability;
+    }
+
+    // Check and Update Availability Status dynamically
+    async updateAvailabilityStatus(doctorId) {
+        const doctor = await doctorRepository.findDoctorById(doctorId);
+        const currentTime = new Date();
+
+        doctor.availability.forEach(avail => {
+            avail.hours.forEach(hour => {
+                const [startHour, startMinute] = hour.start.split(':').map(Number);
+                const startTime = new Date(avail.date);
+                startTime.setHours(startHour, startMinute, 0);
+
+                if (currentTime >= startTime && hour.currentPatients < hour.maxPatients) {
+                    avail.isAvailable = true;
+                } else if (hour.currentPatients >= hour.maxPatients) {
+                    avail.isAvailable = false;
+                } else if (currentTime > startTime) {
+                    avail.isAvailable = false;
+                }
+            });
+        });
+
+        await doctor.save();
+    }
+
+    // Book a patient and check availability
+    async bookPatient(doctorId, availabilityId, hourStart) {
+        const doctor = await doctorRepository.findDoctorById(doctorId);
+
+        const availability = doctor.availability.id(availabilityId);
+        if (!availability) {
+            throw new Error("Availability not found");
+        }
+
+        const hourSlot = availability.hours.find(hour => hour.start === hourStart);
+        if (!hourSlot) {
+            throw new Error("Time slot not found");
+        }
+
+        if (hourSlot.currentPatients >= hourSlot.maxPatients) {
+            throw new Error("Time slot is fully booked");
+        }
+
+        hourSlot.currentPatients += 1;
+        availability.isAvailable = this.checkAvailabilityStatus(availability.hours, hourSlot.maxPatients, hourSlot.currentPatients);
+
+        await doctor.save();
+        return availability;
+    }
+
+    // Helper function to check if availability is still valid
+    checkAvailabilityStatus(hours, maxPatients, currentPatients) {
+        const currentTime = new Date();
+        return hours.some(hour => {
+            const [startHour, startMinute] = hour.start.split(':').map(Number);
+            const startTime = new Date();
+            startTime.setHours(startHour, startMinute, 0);
+
+            return currentTime < startTime && currentPatients < maxPatients;
+        });
+    }
+
 }
 
 module.exports = new DoctorService();
