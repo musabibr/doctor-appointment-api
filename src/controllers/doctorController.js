@@ -1,16 +1,19 @@
 // controllers/doctorController.js
 const validator = require("validator");
+const _ = require("lodash");
 const doctorService = require("../services/doctor/doctorService");
 const response = require("../middleware/response");
-const hashData = require("../util/hashData");
-const { uploadMultipleImages} = require("../util/cloudinary");
+// const { uploadMultipleImages } = require("../util/cloudinary");
+const JWTUtil = require("../middleware/jwt");
+const { compareData } = require("../util/hashData");
+const logger = require("../util/logger");
 
 class DoctorController {
     async registerDoctor(req, res) {
-        let { name, email, password, gender, phoneNumber, address, specialty, about } = req.body;
+        let { name, email, password, gender, phoneNumber, address, specialty, about ,personalID, medicalLicense ,photo } = req.body; // destructuring } = req.body;
 
-        if (!name || !email || !password || !gender || !phoneNumber || !address || !specialty || !about) {
-            return response(res, 400, "fail", `All fields are required: ${!name ? "name," : ""}${!email ? "email," : ""}${!password ? "password," : ""}${!gender ? "gender," : ""}${!phoneNumber ? "phoneNumber," : ""}${!address ? "address," : ""}${!specialty ? "specialty," : ""}${!about ? "about" : ""}`);
+        if (!name || !email || !password || !gender || !phoneNumber || !address || !specialty || !about || !personalID || !medicalLicense || !photo) {
+            return response(res, 400, "fail", `All fields are required: ${!name ? "name," : ""}${!email ? "email," : ""}${!password ? "password," : ""}${!gender ? "gender," : ""}${!phoneNumber ? "phoneNumber," : ""}${!address ? "address," : ""}${!specialty ? "specialty," : ""}${!about ? "about" : ""} ${!personalID ? "personalID," : ""}${!medicalLicense ? "medicalLicense" : ""} ${!photo ? "photo" : ""}`);
         }
 
         if (
@@ -47,66 +50,170 @@ class DoctorController {
         if (!validator.isAlpha(about, "en-US", { ignore: " " }) || about.length > 100) {
             return response(res, 400, "fail", "Invalid about");
         }
+        if(!validator.isURL(personalID)){
+            return response(res, 400, "fail", "Invalid personal ID");
+        }
+        if(!validator.isURL(medicalLicense)){
+            return response(res, 400, "fail", "Invalid medical license");
+        }
+        if (!validator.isURL(photo)) {
+            return response(res, 400, "fail", "Invalid photo URL");
+        }
         
         try {
-            password = await hashData.encryptData(password);
+            // Register the doctor and send OTP
+            const doctor = await doctorService.registerDoctor({
+                name, email, password, gender, phoneNumber, address, specialty, about ,personalID, medicalLicense
+            });
 
-            const doctorData = {
-                name,
-                email,
-                password,
-                gender,
-                phoneNumber,
-                address,
-                specialty,
-                about,
-            };
-            doctor = await doctorService.registerDoctor(doctorData);
             if (doctor === 'exist') {
-                return response(res,400,'fail','You already have account with this email please login.')
+                return response(res, 400, 'fail', 'You already have an account with this email. Please login.');
             }
-            console.log("doctor:", doctor)
-            response(res, 201, "success", "Doctor registered successfully",doctor);
+
+            return response(res, 201, 'success', 'Doctor registered successfully. An OTP has been sent to your email for verification.', doctor);
         } catch (error) {
-            // logger.error(error); 
+            console.error(error);
+            return response(res, 500, 'fail', error.message);
+        }
+    }
+
+    async login(req, res, next) {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+        return response(res, 400, "fail", "Email and password are required");
+        }
+        if (!validator.isEmail(email)) {
+        return response(res, 400, "fail", "Invalid email address");
+        }
+        if (password.length < 8) {
+        return response(
+            res,
+            400,
+            "fail",
+            "Password must be at least 8 characters"
+        );
+        }
+
+        try {
+        const doctor = await doctorService.loginDoctor(email);
+        if (doctor === 404) {
+            return response(res, 404, "fail", "No account found, please register");
+        }
+
+        const isMatch = await compareData(password, doctor.password);
+        if (!isMatch) {
+            return response(res, 400, "fail", "Invalid credentials");
+        }
+
+        const sanitizedDoctor = _.omit(doctor.toObject(), [
+            "password",
+            "imgPId",
+            "__v",
+        ]);
+        const token = JWTUtil.generateToken(doctor.toObject());
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 3600000, // 1 hour
+        });
+
+        req.doctor = sanitizedDoctor;
+        response(res, 200, "success", "Logged in successfully", sanitizedDoctor);
+        } catch (error) {
+            console.log(error);
+            
+            return response(res, 500, "fail", "Login failed");
+        }
+        // next();
+    }
+
+    async protected(req, res, next) {
+        let token;
+
+        try {
+        if (
+            req.headers.authorization &&
+            req.headers.authorization.startsWith("Bearer")
+        ) {
+            token = req.headers.authorization.split(" ")[1];
+            const decodedToken = await JWTUtil.verifyToken(token);
+
+            const doctor = await doctorService.getDoctorById(decodedToken._id);
+            if (!doctor) {
+            logger.warn(`Doctor not found with ID: ${decodedToken._id}`);
+            return response(res, 401, "fail", "Unauthorized: Doctor not found");
+            }
+
+            req.doctor = _.omit(doctor.toObject(), ["password","isApproved", "__v","personalID","medicalLicense"]);
+            next();
+        } else {
+            logger.warn("Unauthorized access attempt: Missing or invalid token");
+            return response(
+            res,
+            401,
+            "fail",
+            "Unauthorized: Missing or invalid token"
+            );
+        }
+        } catch (error) {
+        logger.error("Error in token validation:", error);
+        return response(
+            res,
+            500,
+            "fail",
+            `Something went wrong: ${error.message}`
+        );
+        }
+    }
+
+    async logout(req, res) {
+        try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decodedToken = await JWTUtil.verifyToken(token);
+        const timeRemaining = 1 || decodedToken.exp - Math.floor(Date.now() / 1000);
+
+        await JWTUtil.blacklistToken(token,timeRemaining );
+        logger.info("Token blacklisted successfully");
+
+        response(res, 200, "success", "Logged out and token blacklisted");
+        } catch (error) {
             console.log(error)
-            response(res, 500, "fail", error.message);
+            response(res, 500, "fail", "Logout failed");
         }
     }
 
-    async verifyDoctor(req, res) {
-        try {
-            const doctor = await doctorService.verifyDoctorEmail(req.params.id, req.body.otp);
-            res.status(200).json(doctor);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    }
-
-    async searchDoctors(req, res) {
-        try {
-            const doctors = await doctorService.searchDoctors(req.query);
-            res.status(200).json(doctors);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    }
-
-    async updateDoctorAvailability(req, res) {
-        try {
-            const doctor = await doctorService.updateDoctorAvailability(req.params.id, req.body.isAvailable);
-            res.status(200).json(doctor);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    }
-
+    // Resend OTP
     async resendOtp(req, res) {
+        const { email } = req.body;
+
+        if (!email) {
+            return response(res, 400, 'fail', 'Email is required.');
+        }
+
         try {
-            const doctor = await doctorService.resendOtp(req.params.id);
-            res.status(200).json(doctor);
+            await doctorService.resendOtp(email);
+            return response(res, 200, 'success', 'A new OTP has been sent to your email for verification.');
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            return response(res, 400, 'fail', error.message);
+        }
+    }
+
+    // Verify OTP
+    async verifyOtp(req, res) {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return response(res, 400, 'fail', 'Email and OTP are required.');
+        }
+
+        try {
+            const result = await doctorService.verifyDoctor(email, otp);
+            return response(res, result.valid ? 200 : 400, result.valid ? 'success' : 'fail', result.message);
+        } catch (error) {
+            console.error(error);
+            return response(res, 500, 'fail', 'Error verifying OTP.');
         }
     }
 }
