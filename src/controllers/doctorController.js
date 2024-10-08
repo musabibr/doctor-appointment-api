@@ -7,7 +7,6 @@ const response = require("../middleware/response");
 const JWTUtil = require("../middleware/jwt");
 const { compareData } = require("../util/hashData");
 const logger = require("../util/logger");
-
 class DoctorController {
     async registerDoctor(req, res) {
         let { name, email, password, gender, phoneNumber, address, specialty, about ,personalID, medicalLicense ,photo } = req.body; // destructuring } = req.body;

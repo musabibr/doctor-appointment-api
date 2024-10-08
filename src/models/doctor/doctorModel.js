@@ -30,15 +30,6 @@ const doctorSchema = new mongoose.Schema({
     address: { type: String, required: true },
     specialty: { type: String, required: true },
     about: { type: String },
-
-    // Embedding Clinic and Availability as separate schemas
-    clinic: {
-        name: { type: String },
-        location: {
-            state: { type: String },
-            city: { type: String },
-        }
-    },
     availability: [
         {
             date: { type: Date },
