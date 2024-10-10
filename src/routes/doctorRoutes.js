@@ -29,9 +29,10 @@ router.put("/availability/update", doctorController.updateAvailability);
 router.delete("/availability/delete", doctorController.deleteAvailability);
 router.get("/availability/:doctorId", doctorController.getAvailability);
 // manage clinic details
-router.post("/clinic/add", clinicController.addClinic);
+router.post("/clinic/add", clinicController.createClinic);
 router.put("/clinic/update", clinicController.updateClinic);
-// router.delete("/clinic/delete", clinicController.deleteClinic);
+router.get('/clinic/location', clinicController.getClinicsByLocation);
+// router.delete("/clinic/delete", clinicController.);
 
 // manage appointments
 router.get("/appointments/doctor/:doctorId",appointmentController.getDoctorAppointments);
@@ -40,8 +41,7 @@ router.patch("/appointments/:appointmentId/cancel", appointmentController.cancel
 router.patch("/appointments/:appointmentId/reschedule", appointmentController.rescheduleAppointment);
 // manage reviews
 router.post("/review", reviewController.getDoctorRating);
-router.post("/reviews", reviewController.getDoctorReviews);
-router.get("/reviews", reviewController.getAllReviews);
+router.post("/reviews", reviewController.getAllReviews);
 router.post("/report", reviewController.reportReview);
 
 // Delete doctor account
