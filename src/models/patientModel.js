@@ -29,24 +29,13 @@ const patientSchema = new mongoose.Schema({
     location: {
         state: { type: String },
         city: { type: String },
-        area: { type: String },
     },
-    preferences: {
-        specialties: [
-            {
-                specialty: { type: mongoose.Schema.Types.ObjectId, ref: "Specialty" },
-            },
-        ],
-    },
+    resetToken: { type: String },
+    resetTokenExpiry:{type:Date},
     appointments: [
         {
-            doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor" },
-            date: { type: Date, required: true },
-            status: { 
-                type: String, 
-                enum: ["scheduled", "completed", "cancelled"], 
-                default: "scheduled" 
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Appointment",
         },
     ]
 },{
@@ -59,4 +48,4 @@ const Patient = mongoose.model("Patient", patientSchema);
 
 module.exports = Patient;
 
-// base on this schema create patient repository and patient service , patient controller and patient routes
+// 

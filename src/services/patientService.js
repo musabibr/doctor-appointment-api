@@ -1,6 +1,4 @@
 const patientRepository = require("../repositories/patientRepository");
-const JWTUtil = require("../middleware/jwt");
-
 class PatientService {
     async registerPatient(patientData) {
         const existingPatient = await patientRepository.findByEmail(patientData.email);
@@ -26,6 +24,9 @@ class PatientService {
     async updatePatient(patientId, updateData) {
         return await patientRepository.update(patientId, updateData);
     }
+    async getPatientByResetToken(token) {
+        return await patientRepository.findByResetToken(token);
+    }
 
     async deletePatient(patientId) {
         return await patientRepository.delete(patientId);
@@ -33,3 +34,4 @@ class PatientService {
 }
 
 module.exports = new PatientService();
+// 

@@ -3,6 +3,13 @@ const redisClient = require('../db_config/redis_config'); // Assuming you're usi
 const logger = require('../util/logger');
 
 const JWTUtil = {
+    
+    // Generate a JWT token
+    generateToken: (payload) => {
+        return jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: '30d',
+        });
+    },
     // Verify the token and check if it's blacklisted
     verifyToken: async (token) => {
         try {
@@ -32,7 +39,7 @@ const JWTUtil = {
     blacklistToken: async (token, expiration) => {
         try {
             // Store the token in Redis with the same expiration time as the JWT
-            await redisClient.set(`blacklist_${token}`, true, {
+            await redisClient.set(`blacklist_${token}`, 'true', {
                 EX: expiration, // Set expiry in seconds
             });
         } catch (error) {

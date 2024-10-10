@@ -1,29 +1,17 @@
 const patientService = require("../services/patientService");
 const validator = require("validator");
-const path = require("path");
 const _ = require("lodash");
 const response = require("../middleware/response");
 const JWTUtil = require("../middleware/jwt");
-const { uploadSingleImage } = require("../util/cloudinary");
 const { encryptData, compareData } = require("../util/hashData");
 const logger = require("../util/logger");
-
-// Allowed image types
-const allowedImageTypes = [".jpg", ".jpeg", ".png"];
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2 MB
-
-// Helper function to validate image type and size
-const validateImage = (file) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const validType = allowedImageTypes.includes(ext);
-    const validSize = file.buffer.length <= MAX_IMAGE_SIZE;
-    return { validType, validSize };
-    };
+const crypto = require("crypto");
+const emailService = require("../util/emailService");
 
     class PatientController {
     async register(req, res) {
         try {
-        const { name, email, password, gender } = req.body;
+        const { name, email, password, gender ,location ,photo} = req.body;
         if (!name || !email || !password || !gender) {
             return response(res, 400, "fail", "All fields are required");
         }
@@ -48,14 +36,29 @@ const validateImage = (file) => {
         if (!["male", "female"].includes(gender.trim().toLowerCase())) {
             return response(res, 400, "fail", 'Gender must be "male" or "female"');
         }
-
+        if (location) {
+            if(!location.state || !validator.isAlpha(location.state, "en-US", { ignore: " " }) || location.state.length < 3 || location.state.length > 30){
+                return response(res, 400, "fail", "Invalid state format");
+            }
+            if(!location.city || !validator.isAlpha(location.city, "en-US", { ignore: " " }) || location.city.length < 3 || location.city.length > 30){
+                return response(res, 400, "fail", "Invalid city format");
+            }
+        }
+        if(!photo || !validator.isURL(photo)){
+            return response(res, 400, "fail", "Invalid photo format");
+        }
         const encryptedPassword = await encryptData(password);
-        const patient = await patientService.registerPatient({
+        const patientData = {
             name,
             email,
-            password: encryptedPassword,
+            encryptedPassword,
             gender: gender.trim().toLowerCase(),
-        });
+            photo
+        }
+        if(location){
+            patientData.location = location;
+        }
+        const patient = await patientService.registerPatient(patientData);
 
         if (patient === 11001) {
             return response(
@@ -66,41 +69,14 @@ const validateImage = (file) => {
             );
         }
 
-        if (req.file) {
-            const { validType, validSize } = validateImage(req.file);
-            if (!validType) {
-            return response(
-                res,
-                400,
-                "fail",
-                `Invalid image type. Allowed types: ${allowedImageTypes.join(", ")}`
-            );
-            }
-            if (!validSize) {
-            return response(
-                res,
-                400,
-                "fail",
-                "Image exceeds maximum size of 2 MB."
-            );
-            }
-
-            const results = await uploadSingleImage(req.file.buffer, patient._id);
-            if (!results) {
-            return response(res, 500, "fail", "Image upload failed");
-            }
-
-            patient.photo = results.secure_url;
-            patient.imgPId = results.public_id;
-            await patient.save();
-        }
+        
 
         const sanitizedPatient = _.omit(patient.toObject(), [
             "password",
             "imgPId",
             "__v",
         ]);
-        const token = JWTUtil.generateToken(patient);
+        const token = JWTUtil.generateToken(patient.toObject());
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -155,7 +131,7 @@ const validateImage = (file) => {
             "imgPId",
             "__v",
         ]);
-        const token = JWTUtil.generateToken(patient);
+        const token = JWTUtil.generateToken(patient.toObject());
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -166,9 +142,11 @@ const validateImage = (file) => {
         req.patient = sanitizedPatient;
         response(res, 200, "success", "Logged in successfully", sanitizedPatient);
         } catch (error) {
-        response(res, 500, "fail", "Login failed");
+            console.log(error);
+            
+            return response(res, 500, "fail", "Login failed");
         }
-        next();
+        // next();
     }
 
     async protected(req, res, next) {
@@ -213,10 +191,10 @@ const validateImage = (file) => {
     async logout(req, res) {
         try {
         const token = req.headers.authorization.split(" ")[1];
-        const decodedToken = JWTUtil.decodeToken(token);
-        const timeRemaining = decodedToken.exp - Math.floor(Date.now() / 1000);
+        const decodedToken = await JWTUtil.verifyToken(token);
+        const timeRemaining = 1 || decodedToken.exp - Math.floor(Date.now() / 1000);
 
-        await JWTUtil.blacklistToken(token, timeRemaining);
+        await JWTUtil.blacklistToken(token,timeRemaining );
         logger.info("Token blacklisted successfully");
 
         response(res, 200, "success", "Logged out and token blacklisted");
@@ -227,7 +205,7 @@ const validateImage = (file) => {
     }
 
     async updatePatient(req, res) {
-        const { name, location } = req.body;
+        const { name, location ,photo } = req.body;
 
         if (!req.patient) {
         return response(res, 401, "fail", "Unauthorized: Patient not found");
@@ -250,32 +228,11 @@ const validateImage = (file) => {
         ) {
             updates.name = name;
         }
-        if (location && location.state && location.city && location.area) {
+        if (location && (location.state || location.city )) {
             updates.location = location;
         }
-
-        if (req.file) {
-            const { validType, validSize } = validateImage(req.file);
-            if (!validType) {
-            return response(
-                res,
-                400,
-                "fail",
-                `Invalid image type. Allowed types: ${allowedImageTypes.join(", ")}`
-            );
-            }
-            if (!validSize) {
-            return response(
-                res,
-                400,
-                "fail",
-                "Image exceeds maximum size of 2 MB."
-            );
-            }
-
-            const results = await uploadSingleImage(req.file.buffer, id);
-            updates.photo = results.secure_url;
-            updates.imgPId = results.public_id;
+        if (photo) {
+            updates.photo = photo
         }
 
         patient = await patientService.updatePatient(id, updates);
@@ -296,6 +253,124 @@ const validateImage = (file) => {
         response(res, 500, "fail", `Something went wrong: ${error.message}`);
         }
     }
+    //Update Password
+    async updatePassword(req, res) {
+        try {
+            const { oldPassword, newPassword } = req.body;
+
+            if (!req.patient) {
+                return response(res, 401, "fail", "Unauthorized: Patient not found");
+            }
+
+            if (!oldPassword || !newPassword || newPassword.length < 8) {
+                return response(res, 400, "fail", "Invalid input: Password must be at least 8 characters");
+            }
+
+            const patient = await patientService.getPatientById(req.patient._id);
+            if (!patient) {
+                return response(res, 404, "fail", "Patient not found");
+            }
+
+            const isMatch = await compareData(oldPassword, patient.password);
+            if (!isMatch) {
+                return response(res, 400, "fail", "Old password is incorrect");
+            }
+
+            const encryptedNewPassword = await encryptData(newPassword);
+            await patientService.updatePatient(req.patient._id, { password: encryptedNewPassword });
+
+            response(res, 200, "success", "Password updated successfully");
+        } catch (error) {
+            logger.error(`Password update failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+
+    // Forgot Password
+    async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+
+            if (!email || !validator.isEmail(email)) {
+                return response(res, 400, "fail", "Valid email is required");
+            }
+
+            const patient = await patientService.getPatientByEmail(email);
+            if (!patient) {
+                return response(res, 404, "fail", "No account found with this email");
+            }
+
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiration
+
+            await patientService.updatePatient(patient._id, { resetToken, resetTokenExpiry });
+
+            // Send the email with the reset token
+            await emailService.sendResetToken(email, resetToken);
+
+            response(res, 200, "success", "Password reset token sent to email");
+        } catch (error) {
+            logger.error(`Forgot password failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+
+    //Reset Password using the Token
+    async resetPassword(req, res) {
+        try {
+            const { token, newPassword } = req.body;
+
+            if (!token || !newPassword || newPassword.length < 8) {
+                return response(res, 400, "fail", "Invalid input: Token and password must be provided, password must be at least 8 characters");
+            }
+
+            const patient = await patientService.getPatientByResetToken(token);
+            if (!patient || patient.resetTokenExpiry < Date.now()) {
+                return response(res, 400, "fail", "Invalid or expired token");
+            }
+
+            const encryptedNewPassword = await encryptData(newPassword);
+            await patientService.updatePatient(patient._id, { password: encryptedNewPassword, resetToken: null, resetTokenExpiry: null });
+
+            response(res, 200, "success", "Password reset successfully");
+        } catch (error) {
+            logger.error(`Password reset failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+    // Get Patient
+    async getPatient(req, res) {
+        try {
+            if (!req.patient) {
+                return response(res, 401, "fail", "Unauthorized: Patient not found");
+            }
+            const sanitizedPatient = _.omit(req.patient.toObject(), [
+                "password",
+                "imgPId",
+                "__v",
+            ]);
+            return response(res, 200, "success", "Patient retrieved successfully", sanitizedPatient);
+        } catch (error) {
+            return response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+    // Delete Patient
+    async deletePatient(req, res) {
+        try {
+            if (!req.patient) {
+                return response(res, 401, "fail", "Unauthorized: Patient not found");
+            }
+            await patientService.deletePatient(req.patient._id);
+            return response(res, 200, "success", "Patient deleted successfully");
+        } catch (error) {
+            return response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
 }
 
 module.exports = new PatientController();
+// 

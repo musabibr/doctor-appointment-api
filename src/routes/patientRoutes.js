@@ -1,37 +1,33 @@
 const express = require("express");
 const router = express.Router();
 const patientController = require("../controllers/patientController");
-const authMiddleware = require("../middleware/authMiddleware");
-
-const multer = require("multer");
-const multerStorage = multer.memoryStorage();
-const multerFilter = (req, file, cb) => {
-    // Check if the file is an image by checking the mimetype of the file
-    if (file.mimetype.startsWith("image")) {
-        // If the file is an image, call the callback function with the arguments (null, true)
-        cb(null, true);
-    } else {
-        // If the file is not an image, call the callback function with the arguments (new Error('Not an image! Please upload only images.'), false)
-        cb(new Error("Not an image! Please upload only images."), false);
-    }
-};
-
-const upload = multer({
-    storage: multerStorage,
-    fileFilter: multerFilter,
-});
-
-
+const appointmentController = require("../controllers/appointmentController");
+const reviewController = require("../controllers/reviewController");
 // Patient Registration
-router.post("/signup", upload.single("image"),patientController.register);
+router.post("/signup",patientController.register);
 // 
 // Patient Login
 router.post("/login", patientController.login);
 
 // Logout
 router.post("/logout", patientController.logout);
+router.post("/forgot-password", patientController.forgotPassword);
+router.post("/reset-password/:token", patientController.resetPassword);
 
-// Protected Routes - Require JWT authentication
-router.put("/:id", patientController.protected, patientController.updatePatient);
+// Protected Routes
+router.get("/profile", patientController.protected, patientController.getPatient);
+
+// appointment routes
+router.post("/book-appointment", patientController.protected, appointmentController.bookAppointment);
+router.get("/appointments/patient/:id", patientController.protected, appointmentController.getPatientUpcomingAppointments);
+router.patch("/appointments/:appointmentId/reschedule", patientController.protected, appointmentController.rescheduleAppointment);
+// review
+router.post("/review", patientController.protected, reviewController.createReview);
+
+router.patch("/update/:id", patientController.protected, patientController.updatePatient);
+router.patch("/update-password/:id", patientController.protected, patientController.updatePassword);
+
+router.delete("/delete/:id", patientController.protected, patientController.deletePatient);
+
 
 module.exports = router;

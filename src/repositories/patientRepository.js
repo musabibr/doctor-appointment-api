@@ -8,25 +8,43 @@ class PatientRepository {
     }
 
     async findById(patientId) {
-        return await Patient.findById(patientId).populate({
-            path: "appointments.doctor",
-            select: "name specialization", // You can specify which fields to populate from the Doctor model
-        });
+        return await Patient.findById(patientId)
+            .populate({
+                path: "appointments",
+                select: "appointmentDate appointmentHour status price", // Select these fields from Appointment
+                populate: {
+                    path: "doctor",
+                    select: "name" // Populate the doctor's name field
+                }
+            });
     }
 
     async findByEmail(email) {
         return await Patient.findOne({ email })
-            /*.populate({
-            path: "appointments.doctor",
-            select: "name specialization",
-        });*/
+            .populate({
+                path: "appointments",
+                select: "appointmentDate appointmentHour status price", // Select these fields from Appointment
+                populate: {
+                    path: "doctor",
+                    select: "name" // Populate the doctor's name field
+                }
+            })
     }
 
     async update(patientId, updateData) {
-        return await Patient.findByIdAndUpdate(patientId, updateData, { new: true }).populate({
-            path: "appointments.doctor",
-            select: "name specialization",
-        });
+        return await Patient.findByIdAndUpdate(patientId, updateData, { new: true })
+            .populate({
+                path: "appointments",
+                select: "appointmentDate appointmentHour status price", // Select these fields from Appointment
+                populate: {
+                    path: "doctor",
+                    select: "name" // Populate the doctor's name field
+                }
+            });
+    }
+    // New: Find by reset token
+    async findByResetToken(token) {
+        return await Patient.findOne({ resetToken: token });
     }
 
     async delete(patientId) {
@@ -35,3 +53,5 @@ class PatientRepository {
 }
 
 module.exports = new PatientRepository();
+
+// 
