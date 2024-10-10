@@ -88,6 +88,21 @@ class DoctorService {
         await doctorRepository.deleteOtpByEmail(email); // Remove OTP after successful verification
         return { valid: true, message: 'OTP verified successfully. Your account is now active.' };
     }
+    async searchDoctors(queryParams) {
+        const { name, specialty, date, hours, skip, limit, sortBy, sortOrder } = queryParams;
+        
+        // Search logic, filter based on the query parameters
+        return await doctorRepository.searchDoctors({
+            name,
+            specialty,
+            date,
+            hours,
+            skip,
+            limit,
+            sortBy,
+            sortOrder
+        });
+    }
     // Add Availability
     async addAvailability(doctorId, availabilities) {
         const doctor = await doctorRepository.findDoctorById(doctorId);
@@ -110,23 +125,7 @@ class DoctorService {
         doctor.availability.push(...newAvailabilities);
 
         await doctor.save();
-        return doctor.availability;
-        // const availability = {
-        //     date,
-        //     hours: hours.map(hour => ({
-        //         start: hour.start,
-        //         end: hour.end,
-        //         maxPatients: maxPatients,
-        //         currentPatients: 0
-        //     })),
-        //     isAvailable: true // Initially, the slot is available
-        // };
-
-        // const doctor = await doctorRepository.findDoctorById(doctorId);
-        // doctor.availability.push(availability);
-        // await doctor.save();
-
-        // return availability;
+        return doctor;
     }
 
     // Update Availability
@@ -225,6 +224,19 @@ class DoctorService {
 
             return currentTime < startTime && currentPatients < maxPatients;
         });
+    }
+    async getDoctorByResetToken(token) {
+        return await doctorRepository.findByResetToken(token);
+    }
+    async getDoctorById(id) {
+        return await doctorRepository.findDoctorById(id);
+    }
+    
+    async getDoctorByEmail(email) {
+        return await doctorRepository.findByEmail(email);
+    }
+    async updateDoctor(id, data) {
+        return await doctorRepository.updateDoctorProfile(id, data);
     }
 
 }

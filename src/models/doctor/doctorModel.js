@@ -1,4 +1,3 @@
-const { max } = require("lodash");
 const mongoose = require("mongoose");
 // Doctor Schema
 const doctorSchema = new mongoose.Schema({
@@ -63,8 +62,8 @@ const doctorSchema = new mongoose.Schema({
     isVerified: { type: Boolean },
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
-    // Referencing Ratings and Appointments
-    ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }],
+    clinic: { type: mongoose.Schema.Types.ObjectId, ref: "Clinic" },
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     appointments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
 }, {
     timestamps: true,
@@ -76,3 +75,4 @@ const doctorSchema = new mongoose.Schema({
 const Doctor = mongoose.model("Doctor", doctorSchema);
 
 module.exports = Doctor;
+// 

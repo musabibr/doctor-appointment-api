@@ -215,6 +215,26 @@ class DoctorController {
             return response(res, 500, 'fail', 'Error verifying OTP.');
         }
     }
+    async searchDoctors(req, res) {
+        const { name, specialty, date, hours, skip, limit, sortBy, sortOrder } = req.query;
+
+        try {
+            const doctors = await doctorService.searchDoctors({
+                name,
+                specialty,
+                date,
+                hours,
+                skip,
+                limit,
+                sortBy,
+                sortOrder
+            });
+
+            return response(res, 200, 'success', 'Doctors retrieved successfully', doctors);
+        } catch (error) {
+            return response(res, 500, 'fail', `Error retrieving doctors: ${error.message}`);
+        }
+    }
     // Add Availability
     async addAvailability(req, res) {
         const { doctorId, date, hours, maxPatients } = req.body;
@@ -294,7 +314,140 @@ class DoctorController {
             return response(res, 500, 'fail', `Failed to retrieve availability: ${error.message}`);
         }
     }
+     // Update Doctor Profile
+    async updateDoctorProfile(req, res) {
+        const { doctorId } = req.params;
+        const { name, phoneNumber, specialty, about, photo } = req.body;
+
+        // Validate inputs
+        if (!name || !validator.isAlpha(name, 'en-US', { ignore: " " }) || name.length < 3 || name.length > 30) {
+            return response(res, 400, 'fail', 'Invalid name format.');
+        }
+
+        if (!validator.isMobilePhone(phoneNumber)) {
+            return response(res, 400, 'fail', 'Invalid phone number format.');
+        }
+
+        if (!specialty || !validator.isAlpha(specialty, 'en-US', { ignore: " " }) || specialty.length < 3 || specialty.length > 50) {
+            return response(res, 400, 'fail', 'Invalid specialty format.');
+        }
+
+        if (about && (!validator.isAlpha(about, 'en-US', { ignore: " " }) || about.length > 100)) {
+            return response(res, 400, 'fail', 'Invalid "about" section.');
+        }
+
+        if (photo && !validator.isURL(photo)) {
+            return response(res, 400, 'fail', 'Invalid photo URL.');
+        }
+
+        try {
+            const updatedDoctor = await doctorService.updateDoctor(doctorId, { name, phoneNumber, specialty, about, photo });
+            return response(res, 200, 'success', 'Doctor profile updated successfully.', updatedDoctor);
+        } catch (error) {
+            return response(res, 500, 'fail', `Failed to update doctor profile: ${error.message}`);
+        }
+    }
+
+    async updatePassword(req, res) {        try {
+            const { oldPassword, newPassword } = req.body;
+
+            if (!req.doctor) {
+                return response(res, 401, "fail", "Unauthorized: Patient not found");
+            }
+
+            if (!oldPassword || !newPassword || newPassword.length < 8) {
+                return response(res, 400, "fail", "Invalid input: Password must be at least 8 characters");
+            }
+
+            const doctor = await doctorService.getDoctorById(req.doctor._id);
+            if (!doctor) {
+                return response(res, 404, "fail", "Patient not found");
+            }
+
+            const isMatch = await compareData(oldPassword, doctor.password);
+            if (!isMatch) {
+                return response(res, 400, "fail", "Old password is incorrect");
+            }
+
+            const encryptedNewPassword = await encryptData(newPassword);
+            await doctorService.updateDoctor(req.doctor._id, { password: encryptedNewPassword });
+
+            response(res, 200, "success", "Password updated successfully");
+        } catch (error) {
+            logger.error(`Password update failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+
+    // Forgot Password
+    async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+
+            if (!email || !validator.isEmail(email)) {
+                return response(res, 400, "fail", "Valid email is required");
+            }
+
+            const doctor = await doctorService.getDoctorByEmail(email);
+            if (!doctor) {
+                return response(res, 404, "fail", "No account found with this email");
+            }
+
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiration
+
+            await doctorService.updateDoctor(doctor._id, { resetToken, resetTokenExpiry });
+
+            response(res, 200, "success", "Password reset link sent to your email");
+        } catch (error) {
+            logger.error(`Password reset failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+
+
+
+    //Reset Password using the Token
+    async resetPassword(req, res) {
+        try {
+            const { token, newPassword } = req.body;
+
+            if (!token || !newPassword || newPassword.length < 8) {
+                return response(res, 400, "fail", "Invalid input: Token and password must be provided, password must be at least 8 characters");
+            }
+
+            const doctor = await doctorService.getDoctorByResetToken(token);
+            if (!doctor || doctor.resetTokenExpiry < Date.now()) {
+                return response(res, 400, "fail", "Invalid or expired token");
+            }
+
+            const encryptedNewPassword = await encryptData(newPassword);
+            await doctorService.updateDoctor(doctor._id, { password: encryptedNewPassword, resetToken: null, resetTokenExpiry: null });
+
+            response(res, 200, "success", "Password reset successfully");
+        } catch (error) {
+            logger.error(`Password reset failed: ${error.message}`);
+            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+    async deleteDoctor(req, res) {
+        const id = req.body;
+        try {
+            if (!id) {
+                return response(res, 401, "fail", "Please provide the doctor id!");
+            }
+            if (!(await doctorService.getDoctorById(id))) {
+                return response(res, 404, "fail", "Doctor not found");
+            }
+            await doctorService.deleteDoctor(id);
+            return response(res, 200, "success", "Doctor deleted successfully");
+        } catch (error) {
+            return response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
 }
 
 
 module.exports = new DoctorController();
+
