@@ -11,13 +11,13 @@ router.post("/forgot-password", doctorController.forgotPassword);
 router.post("/reset-password", doctorController.resetPassword);
 // Doctor search
 router.get("/search", doctorController.searchDoctors);
+router.post("/resend-otp", doctorController.resendOtp);
+router.post("/verify-otp", doctorController.verifyOtp);
 
 // Protected routes (Require authentication)
 router.use(doctorController.protected); // Protect all routes below this middleware
 
 router.post("/logout", doctorController.logout);
-router.post("/resend-otp", doctorController.resendOtp);
-router.post("/verify-otp", doctorController.verifyOtp);
 
 // Doctor profile routes
 router.put("/profile", doctorController.updateDoctorProfile);
