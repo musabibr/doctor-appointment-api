@@ -11,6 +11,8 @@ router.post("/forgot-password", doctorController.forgotPassword);
 router.post("/reset-password", doctorController.resetPassword);
 // Doctor search
 router.get("/search", doctorController.searchDoctors);
+
+// Resend OTP
 router.post("/resend-otp", doctorController.resendOtp);
 router.post("/verify-otp", doctorController.verifyOtp);
 
