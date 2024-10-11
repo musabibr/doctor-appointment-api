@@ -49,7 +49,7 @@ app.use(morgan('dev'));
 app.use(limiter);
 app.use('/api/v1/patients', patientRoutes)
 app.use('/api/v1/doctors', doctorRoutes)
-app.use('/api/v1/admin')
+app.use('/api/v1/admin',adminRoutes)
 
 
 redisClient.connect();

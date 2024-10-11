@@ -10,7 +10,7 @@ class DoctorRepository {
     
     // Find doctor by id
     async findDoctorById(id) {
-        return await Doctor.findDoctorById(id);
+        return await Doctor.findById(id);
     }
     
     // Find doctor by query

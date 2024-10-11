@@ -22,14 +22,15 @@ router.use(doctorController.protected); // Protect all routes below this middlew
 router.post("/logout", doctorController.logout);
 
 // Doctor profile routes
-router.put("/profile", doctorController.updateDoctorProfile);
+router.patch("/update-profile", doctorController.updateDoctorProfile);
 router.put("/update-password", doctorController.updatePassword);
+// router.get('/profile',doctorController.)
 
 // Availability routes
 router.post("/availability/add", doctorController.addAvailability);
-router.put("/availability/update", doctorController.updateAvailability);
+router.patch("/availability/update", doctorController.updateAvailability);
 router.delete("/availability/delete", doctorController.deleteAvailability);
-router.get("/availability/:doctorId", doctorController.getAvailability);
+router.get("/availability/get", doctorController.getAvailability);
 // manage clinic details
 router.post("/clinic/add", clinicController.createClinic);
 router.put("/clinic/update", clinicController.updateClinic);

@@ -247,10 +247,16 @@ class DoctorController {
     }
     // Add Availability
     async addAvailability(req, res) {
-        const { doctorId, date, hours, maxPatients } = req.body;
+        const { date, hours, maxPatients } = req.body;
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, 'fail', 'Unauthorized');
+        } else {
+            doctorId = req.doctor._id;
+        }
 
-        if (!doctorId || !date || !hours || !Array.isArray(hours)) {
-            return response(res, 400, 'fail', 'Doctor ID, date, and hours are required.');
+        if (!date || !hours || !Array.isArray(hours)) {
+            return response(res, 400, 'fail', 'date, and hours are required.');
         }
 
         if (!validator.isDate(date)) {
@@ -271,9 +277,15 @@ class DoctorController {
 
     // Update Availability
     async updateAvailability(req, res) {
-        const { doctorId, availabilityId, date, hours, maxPatients } = req.body;
+        const { availabilityId, date, hours, maxPatients } = req.body;
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, "fail", "Unauthorized");
+        } else {
+            doctorId = req.doctor._id;
+        }
 
-        if (!doctorId || !availabilityId || !date || !hours || !Array.isArray(hours)) {
+        if ( !availabilityId || !date || !hours || !Array.isArray(hours)) {
             return response(res, 400, 'fail', 'Doctor ID, availability ID, date, and hours are required.');
         }
 
@@ -311,7 +323,12 @@ class DoctorController {
 
     // Get Availability
     async getAvailability(req, res) {
-        const { doctorId } = req.params;
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, 'fail', 'Unauthorized');
+        } else {
+            doctorId = req.doctor._id
+        }
 
         if (!doctorId) {
             return response(res, 400, 'fail', 'Doctor ID is required.');
@@ -326,19 +343,19 @@ class DoctorController {
     }
      // Update Doctor Profile
     async updateDoctorProfile(req, res) {
-        const { doctorId } = req.params;
-        const { name, phoneNumber, specialty, about, photo } = req.body;
-
-        // Validate inputs
-        if (!name || !validator.isAlpha(name, 'en-US', { ignore: " " }) || name.length < 3 || name.length > 30) {
-            return response(res, 400, 'fail', 'Invalid name format.');
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, 'fail', 'Unauthorized');
+        } else {
+            doctorId = req.doctor._id
         }
-
-        if (!validator.isMobilePhone(phoneNumber)) {
+        const { name, phoneNumber, specialty, about, photo } = req.body;
+        let data = {};
+        if (phoneNumber && !validator.isMobilePhone(phoneNumber)) {
             return response(res, 400, 'fail', 'Invalid phone number format.');
         }
 
-        if (!specialty || !validator.isAlpha(specialty, 'en-US', { ignore: " " }) || specialty.length < 3 || specialty.length > 50) {
+        if (specialty && (!validator.isAlpha(specialty, 'en-US', { ignore: " " }) || specialty.length < 3 || specialty.length > 50)) {
             return response(res, 400, 'fail', 'Invalid specialty format.');
         }
 
@@ -351,7 +368,12 @@ class DoctorController {
         }
 
         try {
-            const updatedDoctor = await doctorService.updateDoctor(doctorId, { name, phoneNumber, specialty, about, photo });
+            if (name) data.name = name;
+            if (phoneNumber) data.phoneNumber = phoneNumber;
+            if (specialty) data.specialty = specialty;
+            if (about) data.about = about;
+            if (photo) data.photo = photo;
+            const updatedDoctor = await doctorService.updateDoctor(doctorId, data);
             return response(res, 200, 'success', 'Doctor profile updated successfully.', updatedDoctor);
         } catch (error) {
             return response(res, 500, 'fail', `Failed to update doctor profile: ${error.message}`);
@@ -443,11 +465,11 @@ class DoctorController {
     }
     async verifyAndApproveDoctor(req, res) {
         try {
-            const { email } = req.body;
-            if (!email) {
+            const { id } = req.body;
+            if (!id) {
                 return response(res, 400, "fail", "Email is required");
             }
-            const doctor = await doctorService.getDoctorByEmail(email);
+            const doctor = await doctorService.getDoctorById(id);
             if (!doctor) {
                 return response(res, 404, "fail", "Doctor not found");
             }

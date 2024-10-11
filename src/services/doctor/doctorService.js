@@ -111,18 +111,28 @@ class DoctorService {
             throw new Error("Doctor not found");
         }
 
-        const newAvailabilities = availabilities.map(availability => ({
-            date: availability.date,
-            hours: availability.hours.map(hour => ({
+        // const newAvailabilities = availabilities.map(availability => ({
+        //     date: availability.date,
+        //     hours: availability.hours.map(hour => ({
+        //         start: hour.start,
+        //         end: hour.end,
+        //         maxPatients: availability.maxPatients,
+        //         currentPatients: 0
+        //     })),
+        //     isAvailable: true // Initially, the slot is available
+        // }));
+        const newAvailabilities = {
+            date: availabilities.date,
+            hours: availabilities.hours.map(hour => ({
                 start: hour.start,
                 end: hour.end,
-                maxPatients: availability.maxPatients,
+                maxPatients: availabilities.maxPatients,
                 currentPatients: 0
             })),
             isAvailable: true // Initially, the slot is available
-        }));
+        }
 
-        doctor.availability.push(...newAvailabilities);
+        doctor.availability.push(newAvailabilities);
 
         await doctor.save();
         return doctor;

@@ -1,9 +1,10 @@
 const validator = require("validator");
-const { response } = require("../helpers/response");
+const response = require("../middleware/response");
 const adminService = require("../services/adminService");
 const { encryptData, compareData } = require("../util/hashData");
 const _ = require("lodash");
 const JWTUtil = require("../middleware/jwt");
+const logger = require('../util/logger');
 
 class AdminController {
     async register(req, res) {
@@ -63,7 +64,7 @@ class AdminController {
                 return response(res, 400, "fail", "Invalid credentials");
             }
             const sanitizedData = _.omit(admin.toObject(), ["password", "__v"]);
-            const token = JWTUtil.generateToken(sanitizedData.toObject());
+            const token = JWTUtil.generateToken(sanitizedData);
             res.cookie("token", token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
@@ -72,6 +73,7 @@ class AdminController {
             
             response(res, 200, "success", "Admin logged in successfully", sanitizedData);
         } catch (error) {
+            console.log(error)
             response(res, 500, "fail", "Something went wrong");
         }
     }
