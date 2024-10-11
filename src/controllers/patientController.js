@@ -252,7 +252,8 @@ const emailService = require("../util/emailService");
             sanitizedPatient
         );
         } catch (error) {
-        response(res, 500, "fail", `Something went wrong: ${error.message}`);
+            console.log(error);
+            response(res, 500, "fail", `Something went wrong`);
         }
     }
     //Update Password
@@ -349,7 +350,8 @@ const emailService = require("../util/emailService");
             if (!req.patient) {
                 return response(res, 401, "fail", "Unauthorized: Patient not found");
             }
-            const sanitizedPatient = _.omit(req.patient.toObject(), [
+            let patient = req.patient;
+            const sanitizedPatient = _.omit(patient, [
                 "password",
                 "imgPId",
                 "__v",

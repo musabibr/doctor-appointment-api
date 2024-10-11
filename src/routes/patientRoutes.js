@@ -10,7 +10,7 @@ router.post("/signup",patientController.register);
 router.post("/login", patientController.login);
 
 // Logout
-router.post("/logout", patientController.logout);
+router.get("/logout", patientController.logout);
 router.post("/forgot-password", patientController.forgotPassword);
 router.post("/reset-password/:token", patientController.resetPassword);
 
@@ -24,10 +24,10 @@ router.patch("/appointments/:appointmentId/reschedule", patientController.protec
 // review
 router.post("/review", patientController.protected, reviewController.createReview);
 
-router.patch("/update/:id", patientController.protected, patientController.updatePatient);
-router.patch("/update-password/:id", patientController.protected, patientController.updatePassword);
+router.patch("/update-profile", patientController.protected, patientController.updatePatient);
+router.patch("/update-password", patientController.protected, patientController.updatePassword);
 
-router.delete("/delete/:id", patientController.protected, patientController.deletePatient);
+// router.delete("/delete/:id", patientController.protected, patientController.deletePatient);
 
 
 module.exports = router;
