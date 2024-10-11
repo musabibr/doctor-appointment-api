@@ -127,9 +127,9 @@ class DoctorService {
                 start: hour.start,
                 end: hour.end,
                 maxPatients: availabilities.maxPatients,
-                currentPatients: 0
+                currentPatients: 0,
+                isAvailable: true // Initially, the slot is available
             })),
-            isAvailable: true // Initially, the slot is available
         }
 
         doctor.availability.push(newAvailabilities);
@@ -152,7 +152,7 @@ class DoctorService {
             start: hour.start,
             end: hour.end,
             maxPatients: maxPatients || 1,
-            currentPatients: availability.currentPatients || 0 // Keep current patients if exists
+            currentPatients: availability.currentPatients || 0,// Keep current patients if exists
         }));
 
         // Update `isAvailable` if current time is past availability

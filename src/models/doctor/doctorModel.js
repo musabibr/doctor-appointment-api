@@ -43,11 +43,13 @@ const doctorSchema = new mongoose.Schema({
                 {
                     start: { type: String },  // Simple String without validation
                     end: { type: String },    // Simple String without validation
-                    maxPatients: { type: Number },
-                    currentPatients: { type: Number },
+                    maxPatients: { type: Number, default:5 },
+                    currentPatients: { type: Number, default:0 },
+                    isAvailable: {
+                        type: Boolean, 
+                    },
                 },
             ],
-            isAvailable: { type: Boolean,default:true },
         }
     ],
 
@@ -71,6 +73,17 @@ const doctorSchema = new mongoose.Schema({
     toJSON: { virtuals: true },
 });
 
+doctorSchema.pre("save", async function (next) {
+    this.availability.map((availability) => {
+        availability.hours.map((hour) => {
+            if (hour.currentPatients < hour.maxPatients ) {
+                hour.isAvailable = true;
+            } else {
+                hour.isAvailable = false;
+            }
+        })
+    })
+})
 // Export Model
 const Doctor = mongoose.model("Doctor", doctorSchema);
 

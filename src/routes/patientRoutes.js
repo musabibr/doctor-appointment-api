@@ -19,7 +19,7 @@ router.get("/profile", patientController.protected, patientController.getPatient
 
 // appointment routes
 router.post("/book-appointment", patientController.protected, appointmentController.bookAppointment);
-router.get("/appointments/patient/:id", patientController.protected, appointmentController.getPatientUpcomingAppointments);
+router.get("/appointments/get", patientController.protected, appointmentController.getPatientUpcomingAppointments);
 router.patch("/appointments/:appointmentId/reschedule", patientController.protected, appointmentController.rescheduleAppointment);
 // review
 router.post("/review", patientController.protected, reviewController.createReview);

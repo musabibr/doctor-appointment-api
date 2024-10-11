@@ -13,7 +13,8 @@ class AppointmentService {
         );
 
         if (!doctorAvailability) {
-        throw new Error("Doctor is not available at the requested time");
+            // throw new Error("Doctor is not available at the requested time");
+            return 404
         }
 
         // Create and save the appointment

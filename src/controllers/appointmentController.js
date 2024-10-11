@@ -8,12 +8,16 @@ const response = require("../middleware/response");
 class AppointmentController {
     // Book an appointment
     async bookAppointment(req, res) {
+        let patient 
+        if (!req.patient) {
+            return response(res, 401, "fail", "Unauthorized: Patient not found");
+        } else {
+            patient = req.patient._id;
+        }
         const {
-        patient,
         doctor,
         appointmentDate,
         appointmentHour,
-        reasonForVisit,
         } = req.body;
 
         // Validate Doctor and Patient IDs
@@ -30,12 +34,14 @@ class AppointmentController {
             doctor,
             appointmentDate,
             appointmentHour,
-            reasonForVisit,
         });
-        await NotificationService.notifyAppointmentStatus(
-            newAppointment,
-            "booked"
-        );
+            if (newAppointment === 404) {
+            return response(res,404,'Not Found','sorry doctor is not available at this time')
+        }
+        // await NotificationService.notifyAppointmentStatus(
+        //     newAppointment,
+        //     "booked"
+        // );
         return response(
             res,
             201,
@@ -44,13 +50,19 @@ class AppointmentController {
             newAppointment
         );
         } catch (error) {
-        return response(res, 500, "error", "Internal Server Error");
+            console.log(error)
+            return response(res, 500, "error", "Internal Server Error");
         }
     }
 
     // Patient view upcoming appointments
     async getPatientUpcomingAppointments(req, res) {
-        const { patientId } = req.params;
+        let patientId;
+        if (!req.patient) {
+            return response(res,404,'Not Found',"Patient not found")
+        } else {
+            patientId = req.patient._id
+        }
 
         if (!mongoose.Types.ObjectId.isValid(patientId)) {
         return response(res, 400, "error", "Invalid patient ID");

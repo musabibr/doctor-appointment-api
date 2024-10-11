@@ -13,19 +13,30 @@ class AppointmentRepository {
         if (!doctor) return false;
 
         const availability = doctor.availability.find(
-        (avail) =>
-            avail.date.toISOString().split("T")[0] ===
-            new Date(date).toISOString().split("T")[0]
+        (avail) =>{
+            if(avail.date.toISOString().split("T")[0] ===date){
+                return avail
+            }
+            return false
+            }
         );
-
-        if (!availability || !availability.isAvailable) {
+        
+        if (!availability ) {
         return false;
         }
+        const isAvailable = availability.hours.map(slot => {
+            if (slot.start <= hour) {
+                console.log('hour:', hour);
+                console.log(slot.start)
+                if (slot.isAvailable) return true;
+            }
+            return false;
+        });
+        if (!isAvailable) return false;
 
         const hourSlot = availability.hours.find(
-        (slot) => slot.start <= hour && slot.end >= hour
+            (slot) => slot.start <= hour && slot.end >= hour
         );
-
         if (!hourSlot || hourSlot.currentPatients >= hourSlot.maxPatients) {
         return false;
         }
@@ -42,8 +53,8 @@ class AppointmentRepository {
         appointmentDate: { $gte: new Date() },
         status: { $in: ["pending", "confirmed"] },
         })
-        .populate("doctor")
-        .sort("appointmentDate");
+        // .populate("doctor").select('name photo')
+        // .sort("appointmentDate");
     }
 
     async getAppointmentsByDoctor(doctorId) {
