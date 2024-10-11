@@ -8,7 +8,7 @@ const reviewController = require('../controllers/reviewController');
 
 router.post('/register', AdminController.register);
 router.post('/login', AdminController.login);
-// router.get('/logout','')
+// router.get('/logout','') 
 
 router.use(AdminController.protected);
 
