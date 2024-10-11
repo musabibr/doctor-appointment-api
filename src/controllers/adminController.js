@@ -75,6 +75,21 @@ class AdminController {
             response(res, 500, "fail", "Something went wrong");
         }
     }
+    async logout(req, res) {
+        try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decodedToken = await JWTUtil.verifyToken(token);
+        const timeRemaining = 1 || decodedToken.exp - Math.floor(Date.now() / 1000);
+
+        await JWTUtil.blacklistToken(token,timeRemaining );
+        logger.info("Token blacklisted successfully");
+
+        response(res, 200, "success", "Logged out and token blacklisted");
+        } catch (error) {
+            console.log(error)
+            response(res, 500, "fail", "Logout failed");
+        }
+    }
     async protected(req, res, next) {
         let token;
 
