@@ -105,6 +105,10 @@ class DoctorController {
             return response(res, 400, "fail", "Invalid credentials");
         }
 
+        if (!doctor.isVerified) {
+            return response(res, 400, "fail", "Please verify your email");
+        }
+
         const sanitizedDoctor = _.omit(doctor.toObject(), [
             "password",
             "imgPId",
@@ -143,6 +147,12 @@ class DoctorController {
             if (!doctor) {
             logger.warn(`Doctor not found with ID: ${decodedToken._id}`);
             return response(res, 401, "fail", "Unauthorized: Doctor not found");
+            }
+            if(!doctor.isVerified){
+                return response(res, 401, "fail", "Unauthorized: Please verify your email");
+            }
+            if(!doctor.isApproved){
+                return response(res, 401, "fail", "Unauthorized: Please wait for approval, your account is under review");
             }
 
             req.doctor = _.omit(doctor.toObject(), ["password","isApproved", "__v","personalID","medicalLicense"]);
@@ -429,6 +439,23 @@ class DoctorController {
         } catch (error) {
             logger.error(`Password reset failed: ${error.message}`);
             response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        }
+    }
+    async verifyAndApproveDoctor(req, res) {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return response(res, 400, "fail", "Email is required");
+            }
+            const doctor = await doctorService.getDoctorByEmail(email);
+            if (!doctor) {
+                return response(res, 404, "fail", "Doctor not found");
+            }
+            await doctorService.updateDoctor(doctor._id, { isVerified: true , isApproved: true});
+            return response(res, 200, "success", "Doctor verified successfully");
+        } catch (error) {
+            logger.error(`Doctor verification failed: ${error}`);
+            return response(res, 500, "fail", `Something went wrong: ${error.message}`);
         }
     }
     async deleteDoctor(req, res) {
