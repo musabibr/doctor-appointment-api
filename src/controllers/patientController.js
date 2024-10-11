@@ -11,9 +11,9 @@ const emailService = require("../util/emailService");
     class PatientController {
     async register(req, res) {
         try {
-        const { name, email, password, gender ,location ,photo} = req.body;
+        let { name, email, password, gender ,location ,photo} = req.body;
         if (!name || !email || !password || !gender) {
-            return response(res, 400, "fail", "All fields are required");
+            return response(res, 400, "fail", `All fields are required: ${!name?'name':''} ${!email?'email':''} ${!password?'password':''} ${!gender?'gender':''}`);
         }
         if (
             !validator.isAlpha(name, "en-US", { ignore: " " }) ||
@@ -44,17 +44,19 @@ const emailService = require("../util/emailService");
                 return response(res, 400, "fail", "Invalid city format");
             }
         }
-        if(!photo || !validator.isURL(photo)){
-            return response(res, 400, "fail", "Invalid photo format");
+        if (photo) {
+            if(!validator.isURL(photo)){
+                return response(res, 400, "fail", "Invalid photo format");
+            }
         }
-        const encryptedPassword = await encryptData(password);
+        password= await encryptData(password);
         const patientData = {
             name,
             email,
-            encryptedPassword,
+            password,
             gender: gender.trim().toLowerCase(),
-            photo
         }
+        if (photo) patientData.photo = photo;
         if(location){
             patientData.location = location;
         }
