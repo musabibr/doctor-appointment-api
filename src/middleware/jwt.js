@@ -14,10 +14,10 @@ const JWTUtil = {
     verifyToken: async (token) => {
         try {
             // Check if the token is blacklisted
-            const isBlacklisted = await redisClient.get(`blacklist_${token}`);
-            if (isBlacklisted) {
-                throw new Error('Token has been blacklisted');
-            }
+            // const isBlacklisted = await redisClient.get(`blacklist_${token}`);
+            // if (isBlacklisted) {
+            //     throw new Error('Token has been blacklisted');
+            // }
 
             // Verify the token using jwt.verify
             return jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
