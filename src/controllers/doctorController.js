@@ -113,6 +113,10 @@ class DoctorController {
             "password",
             "imgPId",
             "__v",
+            "isVerified",
+            "personalID",
+            "isApproved",
+            "medicalLicense"
         ]);
         const token = JWTUtil.generateToken(doctor.toObject());
 
@@ -307,14 +311,24 @@ class DoctorController {
 
     // Delete Availability
     async deleteAvailability(req, res) {
-        const { doctorId, availabilityId } = req.body;
+        const { availabilityId } = req.body;
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, 'fail', 'Unauthorized');
+        } else {
+            doctorId = req.doctor._id
+        }
 
-        if (!doctorId || !availabilityId) {
-            return response(res, 400, 'fail', 'Doctor ID and availability ID are required.');
+        if (!availabilityId) {
+            return response(res, 400, 'fail', 'Availability ID is required.');
         }
 
         try {
-            await doctorService.deleteAvailability(doctorId, availabilityId);
+            
+            const result = await doctorService.deleteAvailability(doctorId, availabilityId);
+            if (result === 404) {
+                return response(res, 404, 'fail', 'Availability not found');
+            }
             return response(res, 200, 'success', 'Availability deleted successfully');
         } catch (error) {
             return response(res, 500, 'fail', `Failed to delete availability: ${error.message}`);
@@ -374,41 +388,47 @@ class DoctorController {
             if (about) data.about = about;
             if (photo) data.photo = photo;
             const updatedDoctor = await doctorService.updateDoctor(doctorId, data);
-            return response(res, 200, 'success', 'Doctor profile updated successfully.', updatedDoctor);
+            if (updatedDoctor) {
+                const sanitizedDoctor = _.omit(updatedDoctor.toObject(), ['password', 'resetToken', 'resetTokenExpiry', '__v', 'personalID', 'medicalLicense','isVerified', 'isApproved','createdAt', 'updatedAt']);
+                return response(res, 200, 'success', 'Doctor profile updated successfully.', sanitizedDoctor);
+            }
         } catch (error) {
             return response(res, 500, 'fail', `Failed to update doctor profile: ${error.message}`);
         }
     }
 
     async updatePassword(req, res) {        try {
-            const { oldPassword, newPassword } = req.body;
+        const { oldPassword, newPassword } = req.body;
 
-            if (!req.doctor) {
-                return response(res, 401, "fail", "Unauthorized: Patient not found");
-            }
-
-            if (!oldPassword || !newPassword || newPassword.length < 8) {
-                return response(res, 400, "fail", "Invalid input: Password must be at least 8 characters");
-            }
-
-            const doctor = await doctorService.getDoctorById(req.doctor._id);
-            if (!doctor) {
-                return response(res, 404, "fail", "Patient not found");
-            }
-
-            const isMatch = await compareData(oldPassword, doctor.password);
-            if (!isMatch) {
-                return response(res, 400, "fail", "Old password is incorrect");
-            }
-
-            const encryptedNewPassword = await encryptData(newPassword);
-            await doctorService.updateDoctor(req.doctor._id, { password: encryptedNewPassword });
-
-            response(res, 200, "success", "Password updated successfully");
-        } catch (error) {
-            logger.error(`Password update failed: ${error.message}`);
-            response(res, 500, "fail", `Something went wrong: ${error.message}`);
+        if (!req.doctor) {
+            return response(res, 401, "fail", "Unauthorized: Patient not found");
         }
+        if (!oldPassword) {
+            return response(res, 400, "fail", "Invalid input: Old password is required");
+        }
+        if(!newPassword || newPassword.length < 8) {
+            return response(res, 400, "fail", "Invalid input: Password must be at least 8 characters");
+            
+        }
+
+        const doctor = await doctorService.getDoctorById(req.doctor._id);
+        if (!doctor) {
+            return response(res, 404, "fail", "Patient not found");
+        }
+
+        const isMatch = await compareData(oldPassword, doctor.password);
+        if (!isMatch) {
+            return response(res, 400, "fail", "Old password is incorrect");
+        }
+
+        const encryptedNewPassword = await encryptData(newPassword);
+        await doctorService.updateDoctor(req.doctor._id, { password: encryptedNewPassword });
+
+        response(res, 200, "success", "Password updated successfully");
+    } catch (error) {
+        logger.error(`Password update failed: ${error.message}`);
+        response(res, 500, "fail", `Something went wrong: ${error.message}`);
+    }
     }
 
 

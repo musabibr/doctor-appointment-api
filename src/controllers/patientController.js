@@ -161,6 +161,14 @@ const emailService = require("../util/emailService");
         ) {
             token = req.headers.authorization.split(" ")[1];
             const decodedToken = await JWTUtil.verifyToken(token);
+            if (decodedToken === false) {
+            return response(
+                res,
+                401,
+                "fail",
+                "Unauthorized: Invalid token"
+            );
+            }
 
             const patient = await patientService.getPatientById(decodedToken._id);
             if (!patient) {

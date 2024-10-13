@@ -17,6 +17,9 @@ class ReviewService {
         ratingCount: result[0]?.ratingCount || 0,
         };
     }
+    async getDoctorReviews(doctorId) {
+        return await ReviewRepository.getDoctorReviews(doctorId);
+    }
 
     async reportReview(id) {
         return await ReviewRepository.reportReview(id);

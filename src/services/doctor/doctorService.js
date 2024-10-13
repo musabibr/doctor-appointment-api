@@ -165,14 +165,20 @@ class DoctorService {
     // Delete Availability
     async deleteAvailability(doctorId, availabilityId) {
         const doctor = await doctorRepository.findDoctorById(doctorId);
-        doctor.availability.id(availabilityId).remove();
+        doctor.availability.map(avail => {
+            if (avail.id === availabilityId) {
+                doctor.availability.pop(avail)
+            } else {
+                return 404
+            }
+        })
         await doctor.save();
     }
 
     // Get Availability
-    async getAvailability(doctorId) {
+    async getAvailability(doctorId,) {
         const doctor = await doctorRepository.findDoctorById(doctorId);
-        return doctor.availability;
+        return doctor.availability ;
     }
 
     // Check and Update Availability Status dynamically

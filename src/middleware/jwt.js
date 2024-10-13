@@ -22,13 +22,14 @@ const JWTUtil = {
             // Verify the token using jwt.verify
             return jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
                 if (err) {
+                    return false;
                     if (err.name === 'TokenExpiredError') {
                         throw new Error('Token has expired');
                     }
                     throw new Error('Invalid token');
                 }
-                return decoded;
-            });
+                return decoded ;
+            }) ;
         } catch (error) {
             logger.error(`Token verification failed: ${error.message}`, { token, error });
             throw error;
@@ -39,9 +40,9 @@ const JWTUtil = {
     blacklistToken: async (token, expiration) => {
         try {
             // Store the token in Redis with the same expiration time as the JWT
-            await redisClient.set(`blacklist_${token}`, 'true', {
-                EX: expiration, // Set expiry in seconds
-            });
+            // await redisClient.set(`blacklist_${token}`, 'true', {
+            //     EX: expiration, // Set expiry in seconds
+            // });
         } catch (error) {
             logger.error(`Failed to blacklist token: ${error.message}`, { token, error });
             throw error;

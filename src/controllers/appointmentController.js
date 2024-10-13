@@ -85,7 +85,12 @@ class AppointmentController {
 
     // Doctor view all appointments
     async getDoctorAppointments(req, res) {
-        const { doctorId } = req.params;
+        let doctorId;
+        if (!req.doctor) {
+            return response (res, 401, 'fail', 'Unauthorized');
+        } else {
+            doctorId = req.doctor._id
+        }
 
         if (!mongoose.Types.ObjectId.isValid(doctorId)) {
         return response(res, 400, "error", "Invalid doctor ID");
@@ -109,18 +114,36 @@ class AppointmentController {
 
     // Doctor accept or decline appointment
     async updateAppointmentStatus(req, res) {
-        const { appointmentId } = req.params;
-        const { status } = req.body;
+        const { status, appointmentId } = req.body;
+        if (!appointmentId) {
+        return response(res, 400, "error", "Appointment ID is required");
+        }
+        if(!status) {
+        return response(res, 400, "error", "Status is required");
+        }
 
         if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
         return response(res, 400, "error", "Invalid appointment ID");
         }
 
-        if (!["confirmed", "declined"].includes(status)) {
+        if (!["confirmed", "declined","canceled"].includes(status)) {
         return response(res, 400, "error", "Invalid status");
         }
 
         try {
+        const appointment = await AppointmentService.getAppointmentById(
+            appointmentId
+        );
+
+        if (!appointment) {
+        return response(res, 404, "fail", "Appointment not found");
+        }
+            if (appointment.status === "canceled") {
+                return response(res, 400, "fail", "Appointment already canceled");
+            }
+        if(appointment.status === "declined") {
+            return response(res, 400, "fail", "Appointment already declined");
+        }
         const updatedAppointment =
             await AppointmentService.updateAppointmentStatus(appointmentId, status);
         await NotificationService.notifyAppointmentStatus(
@@ -151,10 +174,10 @@ class AppointmentController {
         const canceledAppointment = await AppointmentService.cancelAppointment(
             appointmentId
         );
-        await NotificationService.notifyAppointmentStatus(
-            canceledAppointment,
-            "canceled"
-        );
+        // await NotificationService.notifyAppointmentStatus(
+        //     canceledAppointment,
+        //     "canceled"
+        // );
         return response(
             res,
             200,
@@ -163,6 +186,7 @@ class AppointmentController {
             canceledAppointment
         );
         } catch (error) {
+            console.log(error)
         return response(res, 500, "error", "Internal Server Error");
         }
     }

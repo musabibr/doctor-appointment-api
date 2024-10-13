@@ -50,16 +50,18 @@ class AppointmentRepository {
     async getUpcomingAppointmentsByPatient(patientId) {
         return await Appointment.find({
         patient: patientId,
-        appointmentDate: { $gte: new Date() },
         status: { $in: ["pending", "confirmed"] },
         })
-        // .populate("doctor").select('name photo')
-        // .sort("appointmentDate");
+        .populate("doctor","name photo specialty")
+        .sort("appointmentDate");
     }
 
     async getAppointmentsByDoctor(doctorId) {
-        return await Appointment.find({ doctor: doctorId })
-        .populate("patient")
+        return await Appointment.find({
+            doctor: doctorId,
+            status: { $nin: ["canceled", "declined"] },
+        })
+        .populate("patient", "name photo")
         .sort("appointmentDate");
     }
 

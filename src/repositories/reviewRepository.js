@@ -15,6 +15,11 @@ class ReviewRepository {
         .limit(limit);
     }
 
+    async getDoctorReviews(doctorId) {
+        return await Review.find({ doctor: doctorId })
+            .populate("user").select("name photo")
+            .populate("appointment").select("date hour");
+    }
     async calculateDoctorRating(doctorId) {
         return await Review.aggregate([
         { $match: { doctor: mongoose.Types.ObjectId(doctorId) } },

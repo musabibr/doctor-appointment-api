@@ -4,7 +4,13 @@ const mongoose = require("mongoose");
 
 class ReviewController {
     async createReview(req, res) {
-        const { rating, review, user, doctor, appointment } = req.body;
+        const { rating, review, doctor, appointment } = req.body;
+        let user;
+        if (!req.patient) {
+            return response(res, 401, "fail", "Unauthorized: Patient not found");
+        } else {
+            user = req.patient._id
+        }
 
         if (!rating || rating < 1 || rating > 5) {
             return response(res, 400, "error", "Rating must be between 1 and 5");
@@ -31,6 +37,7 @@ class ReviewController {
                 newReview
             );
         } catch (error) {
+            console.log(error);
             return response(res, 500, "error", "Internal Server Error");
         }
     }
@@ -53,6 +60,36 @@ class ReviewController {
                 reviews
             );
         } catch (error) {
+            return response(res, 500, "error", "Internal Server Error");
+        }
+    }
+    async getDoctorReviews(req, res) {
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, "fail", "Unauthorized: Doctor not found");
+        } else {
+            doctorId = req.doctor._id
+        }
+
+        try {
+            const reviews = await ReviewService.getDoctorReviews(doctorId);
+            reviews.forEach((review) => {
+                review.user = review.user.name;
+                review.userPhoto = review.user.photo;
+                review.__v = undefined;
+                review.doctorName = review.doctor.name;
+                review.doctorPhoto = review.doctor.photo;
+                review.appointment = review.appointment.date;
+            })
+            return response(
+                res,
+                200,
+                "success",
+                "Doctor reviews retrieved successfully",
+                reviews
+            );
+        } catch (error) {
+            console.log(error);
             return response(res, 500, "error", "Internal Server Error");
         }
     }
