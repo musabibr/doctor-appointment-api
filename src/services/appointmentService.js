@@ -18,7 +18,7 @@ class AppointmentService {
         }
 
         // Create and save the appointment
-        return await AppointmentRepository.createAppointment(appointmentData);
+        return (await AppointmentRepository.createAppointment(appointmentData));
     }
 
     async getPatientUpcomingAppointments(patientId) {
@@ -66,7 +66,9 @@ class AppointmentService {
         newHour
         );
     }
-
+    async getAppointmentById(id) {
+        return await AppointmentRepository.findAppointmentById(id);
+    }
     async sendUpcomingAppointmentNotifications() {
         const appointments =
         await AppointmentRepository.getUpcomingAppointmentsWithin24Hours();

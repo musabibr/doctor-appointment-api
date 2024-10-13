@@ -138,18 +138,20 @@ class AppointmentController {
         if (!appointment) {
         return response(res, 404, "fail", "Appointment not found");
         }
-            if (appointment.status === "canceled") {
-                return response(res, 400, "fail", "Appointment already canceled");
-            }
-        if(appointment.status === "declined") {
-            return response(res, 400, "fail", "Appointment already declined");
+        if (appointment.status === "canceled") {
+            return response(res, 400, "fail", "Appointment already canceled");
         }
+
+        if (appointment.status === "confirmed" && status === "confirmed") {
+            return response(res, 400, "fail", "Appointment already confirmed");
+        }
+
+        if (appointment.status === "declined" && status === "confirmed") {
+            return response(res, 400, "fail", "You cannot decline after confirmation, you can cancel it instead");
+        }
+        console.log(appointment)
         const updatedAppointment =
             await AppointmentService.updateAppointmentStatus(appointmentId, status);
-        await NotificationService.notifyAppointmentStatus(
-            updatedAppointment,
-            status
-        );
         return response(
             res,
             200,
@@ -158,6 +160,7 @@ class AppointmentController {
             updatedAppointment
         );
         } catch (error) {
+        console.log(error)
         return response(res, 500, "error", "Internal Server Error");
         }
     }

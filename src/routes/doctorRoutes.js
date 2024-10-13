@@ -40,13 +40,13 @@ router.get('/clinic/location', clinicController.getClinicsByLocation);
 
 // manage appointments
 router.get("/appointments/get",appointmentController.getDoctorAppointments);//done
-router.patch("/appointments/update-status/:appointmentId", appointmentController.updateAppointmentStatus);
-router.patch("/appointments/:appointmentId/cancel", appointmentController.cancelAppointment);
-router.patch("/appointments/:appointmentId/reschedule", appointmentController.rescheduleAppointment);
+router.patch("/appointments/update-status", appointmentController.updateAppointmentStatus);//done
+// router.patch("/appointments/:appointmentId/cancel", appointmentController.cancelAppointment);
+// router.patch("/appointments/:appointmentId/reschedule", appointmentController.rescheduleAppointment);
 // manage reviews
-router.post("/review", reviewController.getDoctorRating);
-router.post("/reviews", reviewController.getAllReviews);
-router.post("/report", reviewController.reportReview);
+router.get("/reviews/ratings", reviewController.getDoctorRating);//done
+router.get("/reviews", reviewController.getDoctorReviews);//done
+router.post("/reviews/report-review", reviewController.reportReview);
 
 // Delete doctor account
 // router.delete("/delete", doctorController.deleteDoctor);

@@ -23,6 +23,7 @@ router.get("/appointments/get", patientController.protected, appointmentControll
 router.get("/appointments/cancel/:appointmentId", patientController.protected, appointmentController.cancelAppointment);//
 // review
 router.post("/review-doctor", patientController.protected, reviewController.createReview);//done
+router.delete('/delete-my-review',patientController.protected,reviewController.deleteMyReview)//done
 
 router.patch("/update-profile", patientController.protected, patientController.updatePatient);//done
 router.patch("/update-password", patientController.protected, patientController.updatePassword);//done

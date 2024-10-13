@@ -6,6 +6,10 @@ class ReviewRepository {
         const review = new Review(data);
         return await review.save();
     }
+    
+    async getReviewById(id) {
+        return await Review.findById(new mongoose.Types.ObjectId(id));
+    }
 
     async getPaginatedReviews({ skip, limit, sort }) {
         return await Review.find()
@@ -17,25 +21,28 @@ class ReviewRepository {
 
     async getDoctorReviews(doctorId) {
         return await Review.find({ doctor: doctorId })
-            .populate("user").select("name photo")
-            .populate("appointment").select("date hour");
+            .populate("user","name photo")
     }
     async calculateDoctorRating(doctorId) {
-        return await Review.aggregate([
-        { $match: { doctor: mongoose.Types.ObjectId(doctorId) } },
-        {
-            $group: {
-            _id: "$doctor",
-            avgRating: { $avg: "$rating" },
-            ratingCount: { $sum: 1 },
+        const result = await Review.aggregate([
+            { $match: { doctor:new mongoose.Types.ObjectId(doctorId) } },
+            {
+                $group: {
+                    _id: null,//"$doctor",
+                    avgRating: { $avg: "$rating" },
+                    ratingCount: { $count:{} },
+                },
             },
-        },
         ]);
+        return result || { avgRating: 0, ratingCount: 0 };
+    }
+    async filterReviews(doctorId, patientId) {
+        return (await Review.find({ doctor: doctorId, patient: patientId }));
     }
 
     async reportReview(id) {
         return await Review.findByIdAndUpdate(
-        id,
+        new mongoose.Types.ObjectId(id),
         { reported: true },
         { new: true }
         );

@@ -28,6 +28,9 @@ class ReviewController {
 
         try {
             const reviewData = { rating, review, user, doctor, appointment };
+            if(await ReviewService.filterReviews(doctor, user)) {
+                return response(res, 400, "error", "Review already exists");
+            }
             const newReview = await ReviewService.createReview(reviewData);
             return response(
                 res,
@@ -73,14 +76,14 @@ class ReviewController {
 
         try {
             const reviews = await ReviewService.getDoctorReviews(doctorId);
-            reviews.forEach((review) => {
-                review.user = review.user.name;
-                review.userPhoto = review.user.photo;
-                review.__v = undefined;
-                review.doctorName = review.doctor.name;
-                review.doctorPhoto = review.doctor.photo;
-                review.appointment = review.appointment.date;
-            })
+            // reviews.forEach((review) => {
+            //     review.user = review.user.name;
+            //     review.userPhoto = review.user.photo;
+            //     review.__v = undefined;
+            //     review.doctorName = review.doctor.name;
+            //     review.doctorPhoto = review.doctor.photo;
+            //     review.appointment = review.appointment.date;
+            // })
             return response(
                 res,
                 200,
@@ -95,7 +98,10 @@ class ReviewController {
     }
 
     async getDoctorRating(req, res) {
-        const { doctorId } = req.params;
+        let doctorId = req.doctor._id;
+        if (!doctorId) {
+            return response(res, 400, "error", "Invalid or doctor ID not found");
+        } 
 
         if (!mongoose.Types.ObjectId.isValid(doctorId)) {
             return response(res, 400, "error", "Invalid doctor ID");
@@ -116,22 +122,30 @@ class ReviewController {
                 }
             );
         } catch (error) {
+            console.log(error)
             return response(res, 500, "error", "Internal Server Error");
         }
     }
 
     async reportReview(req, res) {
-        const { id } = req.params;
-
+        const id = req.body;
+        if (!id) {
+            return response(res,400,'fail',"Invalid or review ID not found");
+        }
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return response(res, 400, "error", "Invalid review ID");
         }
 
         try {
-            const reportedReview = await ReviewService.reportReview(id);
-            if (!reportedReview) {
+            const review = await ReviewService.getReviewById(id);
+            if(!review) {
                 return response(res, 404, "error", "Review not found");
             }
+            if (review.reported) {
+                return response(res,400,'fail',"This review is already reported")
+            }
+            const reportedReview = await ReviewService.reportReview(id);
+            
             return response(
                 res,
                 200,
@@ -140,6 +154,7 @@ class ReviewController {
                 reportedReview
             );
         } catch (error) {
+            console.log(error)
             return response(res, 500, "error", "Internal Server Error");
         }
     }
@@ -159,8 +174,35 @@ class ReviewController {
         }
     }
 
+    async deleteMyReview(req, res) {
+        let patientId
+        const reviewId = req.body;
+        if (!req.patient) {
+            return response(res, 401, "fail", "Unauthorized: Patient not found");
+        } else {
+            patientId = req.patient._id
+        }
+        if (!reviewId) {
+            return response(res, 400, "error", "Invalid or doctor ID not found");
+        }
+        try {
+            const deletedReview = await ReviewService.deleteReview(reviewId);
+            if (deletedReview === 404) {
+                return response(res, 404, "error", "Review not found");
+            }
+            return response(res, 200, "success", "Review deleted successfully");
+        } catch (error) {
+            return response(res, 500, "error", "Internal Server Error");
+        }
+
+    }
+
+
     async deleteReview(req, res) {
-        const { id } = req.params;
+        const id = req.body;
+        if(!id) {
+            return response(res, 400, "error", "Invalid  ID or Not found ");
+        }
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return response(res, 400, "error", "Invalid review ID");

@@ -82,7 +82,7 @@ class AppointmentRepository {
     }
 
     async findAppointmentById(appointmentId) {
-        return await Appointment.findById(appointmentId).populate("doctor");
+        return await Appointment.findById(appointmentId).populate("doctor","name photo specialty");
     }
 
     async rescheduleAppointment(appointmentId, newDate, newHour) {

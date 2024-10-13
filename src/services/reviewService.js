@@ -5,11 +5,16 @@ class ReviewService {
         return await ReviewRepository.createReview(data);
     }
 
+    async getReviewById(id) {
+        return await ReviewRepository.getReviewById(id)
+    }
     async getPaginatedReviews({ page, limit, sort }) {
         const skip = (page - 1) * limit;
         return await ReviewRepository.getPaginatedReviews({ skip, limit, sort });
     }
-
+    async filterReviews(doctorId,patientId) {
+        return await ReviewRepository.filterReviews(doctorId,patientId);
+    }
     async getDoctorRating(doctorId) {
         const result = await ReviewRepository.calculateDoctorRating(doctorId);
         return {
