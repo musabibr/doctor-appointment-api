@@ -273,7 +273,8 @@ class DoctorController {
 
         try {
             const availability = await doctorService.addAvailability(doctorId, { date, hours, maxPatients });
-            return response(res, 201, 'success', 'Availability added successfully', availability);
+            const sanitizedData = _.omit(availability.toObject(), ['__v','password','isApproved','isVerified','personalID','medicalLicense','appointments','reviews']);
+            return response(res, 201, 'success', 'Availability added successfully', sanitizedData);
         } catch (error) {
             return response(res, 500, 'fail', `Failed to add availability: ${error.message}`);
         }

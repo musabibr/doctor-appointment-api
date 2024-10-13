@@ -24,6 +24,9 @@ class AdminController {
             );
         }
         try {
+            if(await adminService.findAdminByEmail(email)) {
+                return response(res, 409, "fail", "Admin already exists");
+            }
             password = await encryptData(password);
             const admin = await adminService.createAdmin({
                 name,

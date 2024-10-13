@@ -28,7 +28,8 @@ class ReviewController {
 
         try {
             const reviewData = { rating, review, user, doctor, appointment };
-            if(await ReviewService.filterReviews(doctor, user)) {
+            const exist = await ReviewService.filterReviews(doctor, user);
+            if(exist && exist.length > 0) {
                 return response(res, 400, "error", "Review already exists");
             }
             const newReview = await ReviewService.createReview(reviewData);
@@ -175,15 +176,15 @@ class ReviewController {
     }
 
     async deleteMyReview(req, res) {
-        let patientId
-        const reviewId = req.body;
+        const {reviewId }= req.body;
         if (!req.patient) {
             return response(res, 401, "fail", "Unauthorized: Patient not found");
-        } else {
-            patientId = req.patient._id
-        }
+        } 
         if (!reviewId) {
             return response(res, 400, "error", "Invalid or doctor ID not found");
+        }
+        if(!mongoose.Types.ObjectId.isValid(reviewId)) {
+            return response(res, 400, "error", "Invalid review ID");
         }
         try {
             const deletedReview = await ReviewService.deleteReview(reviewId);
@@ -192,6 +193,7 @@ class ReviewController {
             }
             return response(res, 200, "success", "Review deleted successfully");
         } catch (error) {
+            console.log(error)
             return response(res, 500, "error", "Internal Server Error");
         }
 

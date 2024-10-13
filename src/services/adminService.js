@@ -10,6 +10,9 @@ class adminService {
     async getAdminById(id) {
         return await AdminRepository.getAdminById(id);
     }
+    async findAdminByEmail(email) {
+        return await AdminRepository.findAdminByEmail(email);
+    }
 }
 
 module.exports = new adminService()
