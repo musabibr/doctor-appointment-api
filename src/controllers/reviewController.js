@@ -68,23 +68,14 @@ class ReviewController {
         }
     }
     async getDoctorReviews(req, res) {
-        let doctorId;
-        if (!req.doctor) {
+        let doctorId = req.body.doctorId;
+        if (!doctorId) {
             return response(res, 401, "fail", "Unauthorized: Doctor not found");
-        } else {
-            doctorId = req.doctor._id
-        }
+        } 
 
         try {
             const reviews = await ReviewService.getDoctorReviews(doctorId);
-            // reviews.forEach((review) => {
-            //     review.user = review.user.name;
-            //     review.userPhoto = review.user.photo;
-            //     review.__v = undefined;
-            //     review.doctorName = review.doctor.name;
-            //     review.doctorPhoto = review.doctor.photo;
-            //     review.appointment = review.appointment.date;
-            // })
+            
             return response(
                 res,
                 200,
@@ -99,7 +90,7 @@ class ReviewController {
     }
 
     async getDoctorRating(req, res) {
-        let doctorId = req.doctor._id;
+        let doctorId = req.body.doctorId;
         if (!doctorId) {
             return response(res, 400, "error", "Invalid or doctor ID not found");
         } 

@@ -11,13 +11,15 @@ router.post("/forgot-password", doctorController.forgotPassword);// no functiona
 router.post("/reset-password", doctorController.resetPassword);// no functional
 // Doctor search
 router.get("/search", doctorController.searchDoctors);//done
+router.post("/reviews/ratings", reviewController.getDoctorRating);//done
+router.post("/reviews", reviewController.getDoctorReviews);//done
+router.get('/profile', doctorController.getDoctorProfile);
 
 // Resend OTP
 router.post("/resend-otp", doctorController.resendOtp);//non functional
 router.post("/verify-otp", doctorController.verifyOtp);//non functional
 
 // Protected routes (Require authentication)
-router.get('/profile', doctorController.getDoctorProfile);
 router.use(doctorController.protected); // Protect all routes below this middleware
 
 router.get("/logout", doctorController.logout);
@@ -45,8 +47,6 @@ router.patch("/appointments/update-status", appointmentController.updateAppointm
 // router.patch("/appointments/:appointmentId/cancel", appointmentController.cancelAppointment);
 // router.patch("/appointments/:appointmentId/reschedule", appointmentController.rescheduleAppointment);
 // manage reviews
-router.get("/reviews/ratings", reviewController.getDoctorRating);//done
-router.get("/reviews", reviewController.getDoctorReviews);//done
 router.post("/reviews/report-review", reviewController.reportReview);
 
 // Delete doctor account

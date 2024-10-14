@@ -8,6 +8,8 @@ const JWTUtil = require("../middleware/jwt");
 const { compareData } = require("../util/hashData");
 const logger = require("../util/logger");
 const mongoose = require("mongoose");
+const reviewService = require('../services/reviewService');
+const { promise } = require("bcrypt/promises");
 class DoctorController {
     async registerDoctor(req, res) {
         let { name, email, password, gender, phoneNumber, address, specialty, about ,personalID, medicalLicense ,photo } = req.body; // destructuring } = req.body;
@@ -234,7 +236,7 @@ class DoctorController {
         const { name, specialty, date, hours, skip, limit, sortBy, sortOrder } = req.query;
 
         try {
-            const doctors = await doctorService.searchDoctors({
+            let doctors = await doctorService.searchDoctors({
                 name,
                 specialty,
                 date,
@@ -244,10 +246,16 @@ class DoctorController {
                 sortBy,
                 sortOrder
             });
-
+            for (let i = 0; i < doctors.length; i++) {
+                const ratings = await reviewService.getDoctorRating(doctors[i].id);
+                if ( ratings ) {
+                    doctors[i] = { ...doctors[i]._doc, ratings };
+                }
+            }
             return response(res, 200, 'success', 'Doctors retrieved successfully', doctors);
         } catch (error) {
-            return response(res, 500, 'fail', `Error retrieving doctors: ${error.message}`);
+            console.log(error)
+            return response(res, 500, 'fail', `Error retrieving doctors`);
         }
     }
     async getDoctorProfile(req, res) {

@@ -73,7 +73,7 @@ class DoctorRepository {
             sort: sortOptions
         };
 
-        return await Doctor.find(query).select('name photo specialty availability about price discount')
+        return await Doctor.find(query).select('name photo specialty about price discount')
             .setOptions(options);
     }
 
