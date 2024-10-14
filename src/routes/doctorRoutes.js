@@ -13,7 +13,7 @@ router.post("/reset-password", doctorController.resetPassword);// no functional
 router.get("/search", doctorController.searchDoctors);//done
 router.post("/reviews/ratings", reviewController.getDoctorRating);//done
 router.post("/reviews", reviewController.getDoctorReviews);//done
-router.get('/profile', doctorController.getDoctorProfile);
+router.post('/profile', doctorController.getDoctorProfile);
 
 // Resend OTP
 router.post("/resend-otp", doctorController.resendOtp);//non functional
