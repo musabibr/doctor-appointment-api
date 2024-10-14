@@ -25,7 +25,7 @@ router.use(doctorController.protected); // Protect all routes below this middlew
 router.get("/logout", doctorController.logout);
 
 // Doctor profile routes
-router.patch("/update-profile", doctorController.updateDoctorProfile);//done
+router.patch("/update-profile", doctorController.updateDoctorProfile);//done 
 router.patch("/update-password", doctorController.updatePassword);//done
 // router.get('/profile',doctorController.)
 
