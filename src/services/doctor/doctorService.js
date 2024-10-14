@@ -88,6 +88,7 @@ class DoctorService {
         await doctorRepository.deleteOtpByEmail(email); // Remove OTP after successful verification
         return { valid: true, message: 'OTP verified successfully. Your account is now active.' };
     }
+    
     async searchDoctors(queryParams) {
         const { name, specialty, date, hours, skip, limit, sortBy, sortOrder } = queryParams;
         

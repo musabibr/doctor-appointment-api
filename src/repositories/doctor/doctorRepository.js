@@ -10,7 +10,14 @@ class DoctorRepository {
     
     // Find doctor by id
     async findDoctorById(id) {
-        return await Doctor.findById(id);
+        return await Doctor.findById(id).populate({ 
+            path: 'clinic', 
+            select: 'name location', 
+            populate: { 
+                path: 'location', 
+                select: 'state city' 
+            } 
+        });
     }
     
     // Find doctor by query
@@ -65,7 +72,7 @@ class DoctorRepository {
             sort: sortOptions
         };
 
-        return await Doctor.find(query).select('name photo specialty availability -_id')
+        return await Doctor.find(query).select('name photo specialty availability about price discount')
             .setOptions(options);
     }
 

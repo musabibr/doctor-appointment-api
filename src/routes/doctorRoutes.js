@@ -17,6 +17,7 @@ router.post("/resend-otp", doctorController.resendOtp);//non functional
 router.post("/verify-otp", doctorController.verifyOtp);//non functional
 
 // Protected routes (Require authentication)
+router.get('/profile', doctorController.getDoctorProfile);
 router.use(doctorController.protected); // Protect all routes below this middleware
 
 router.get("/logout", doctorController.logout);
@@ -33,7 +34,7 @@ router.delete("/availability/delete", doctorController.deleteAvailability);//don
 router.get("/availability/get", doctorController.getAvailability);//done
 router.delete('/availability/delete ', doctorController.deleteAvailability);//done
 // manage clinic details
-router.post("/clinic/add", clinicController.createClinic);
+router.post("/clinic/add-clinic", clinicController.createClinic);
 router.put("/clinic/update", clinicController.updateClinic);
 router.get('/clinic/location', clinicController.getClinicsByLocation);
 // router.delete("/clinic/delete", clinicController.);

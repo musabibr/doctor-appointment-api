@@ -7,6 +7,7 @@ const response = require("../middleware/response");
 const JWTUtil = require("../middleware/jwt");
 const { compareData } = require("../util/hashData");
 const logger = require("../util/logger");
+const mongoose = require("mongoose");
 class DoctorController {
     async registerDoctor(req, res) {
         let { name, email, password, gender, phoneNumber, address, specialty, about ,personalID, medicalLicense ,photo } = req.body; // destructuring } = req.body;
@@ -249,6 +250,33 @@ class DoctorController {
             return response(res, 500, 'fail', `Error retrieving doctors: ${error.message}`);
         }
     }
+    async getDoctorProfile(req, res) {
+        let doctorId;
+        console.log(req.doctor)
+        if(req.doctor){
+            doctorId = req.doctor._id
+        } else {
+            doctorId = req.body.doctorId;
+        }
+        if(!doctorId){
+            return response(res, 400, 'fail', 'Doctor ID is required.');
+        }
+        if(!mongoose.Types.ObjectId.isValid(doctorId)){
+            return response(res, 400, 'fail', 'Invalid doctor ID');
+        }
+        try {
+            const doctor = await doctorService.getDoctorById(doctorId);
+            if(!doctor){
+                return response(res, 404, 'fail', 'Doctor not found');
+            }
+
+            const sanitizedData = _.omit(doctor.toObject(), ["password", "__v" ,"personalID","medicalLicense" ,"isApproved" ,"isVerified","appointments","reviews"]);
+            return response(res, 200, 'success', 'Doctor retrieved successfully', sanitizedData);
+        } catch (error) {
+            console.log(error);
+            return response(res, 500, 'fail', `Something went wrong`);
+        }
+    }
     // Add Availability
     async addAvailability(req, res) {
         const { date, hours, maxPatients } = req.body;
@@ -364,7 +392,7 @@ class DoctorController {
         } else {
             doctorId = req.doctor._id
         }
-        const { name, phoneNumber, specialty, about, photo } = req.body;
+        const { name, phoneNumber, specialty, about, photo, price ,discount } = req.body;
         let data = {};
         if (phoneNumber && !validator.isMobilePhone(phoneNumber)) {
             return response(res, 400, 'fail', 'Invalid phone number format.');
@@ -381,6 +409,12 @@ class DoctorController {
         if (photo && !validator.isURL(photo)) {
             return response(res, 400, 'fail', 'Invalid photo URL.');
         }
+        if(price && !(validator.isNumeric(price) && price > 0)){
+            return response(res, 400, 'fail', 'Invalid price.');
+        }
+        if (discount && !(validator.isNumeric(discount) && discount > 0)) {
+            return response(res, 400, "fail", "Invalid price.");
+        }
 
         try {
             if (name) data.name = name;
@@ -388,6 +422,8 @@ class DoctorController {
             if (specialty) data.specialty = specialty;
             if (about) data.about = about;
             if (photo) data.photo = photo;
+            if (price) data.price = price;
+            if(discount) data.discount = discount;
             const updatedDoctor = await doctorService.updateDoctor(doctorId, data);
             if (updatedDoctor) {
                 const sanitizedDoctor = _.omit(updatedDoctor.toObject(), ['password', 'resetToken', 'resetTokenExpiry', '__v', 'personalID', 'medicalLicense','isVerified', 'isApproved','createdAt', 'updatedAt']);
