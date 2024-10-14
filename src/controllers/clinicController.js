@@ -1,38 +1,76 @@
 const clinicService = require("../services/doctor/clinicService");
-const logger = require('../util/logger')
+const logger = require('../util/logger');
+const doctorService = require('../services/doctor/doctorService');
+const response = require("../middleware/response");
+const validator = require('validator');
+const mongoose = require('mongoose');
 class ClinicController {
 
     async createClinic(req, res) {
-        const { name, location, contact, operatingHours, doctors, services } = req.body;
+        const { name, location, contact, services } = req.body;
+        let doctorId;
+        if (!req.doctor) {
+            return response(res, 401, "fail", "Unauthorized: Doctor not found");
+        } else {
+            doctorId = req.doctor._id
+        }
 
         // Input Validation
-        if (!name || !location || !contact || !doctors || !services) {
-            return response(res, 400, "fail", `All fields are required: ${!name ? "name," : ""}${!location ? "location," : ""}${!contact ? "contact," : ""}${!doctors ? "doctors," : ""}${!services ? "services" : ""}`);
+        if (!name || !location || !contact ) {
+            return response(res, 400, "fail", `All fields are required: ${!name ? "name," : ""}${!location ? "location," : ""}${!contact ? "contact," : ""} ${!services ? "services" : ""}`);
         }
 
         if (!validator.isAlpha(name, "en-US", { ignore: " " }) || name.length < 3 || name.length > 30) {
             return response(res, 400, "fail", "Invalid clinic name format");
         }
 
-        if (!validator.isMobilePhone(contact.phone)) {
-            return response(res, 400, "fail", "Invalid phone number");
+        if (contact) {
+            if(!contact.phone || !contact.email) {
+                return response(res, 400, "fail", "Both phone and email are required");
+            }
+            
+            if (!validator.isMobilePhone(contact.phone)) {
+                return response(res, 400, "fail", "Invalid phone number");
+            }
+    
+            if (!validator.isEmail(contact.email)) {
+                return response(res, 400, "fail", "Invalid email address");
+            }
         }
-
-        if (!validator.isEmail(contact.email)) {
-            return response(res, 400, "fail", "Invalid email address");
-        }
-
-        // Check if the clinic already exists
-        const existingClinic = await clinicService.getClinicByName(name);
-        if (existingClinic) {
-            return response(res, 400, "fail", "Clinic already exists");
+        if (location) {
+            if(!location.city || !location.state) {
+                return response(res, 400, "fail", "Both city and state are required");
+            }
+            if (!validator.isAlpha(location.city, "en-US", { ignore: " " }) || location.city.length < 3 || location.city.length > 30) {
+                return response(res, 400, "fail", "Invalid city name format");
+            }
+            if (!validator.isAlpha(location.state, "en-US", { ignore: " " }) || location.state.length < 3 || location.state.length > 30) {
+                return response(res, 400, "fail", "Invalid state name format");
+            }
         }
 
         try {
-            const newClinic = await clinicService.createClinic({ name, location, contact, operatingHours, doctors, services });
-            return response(res, 201, "success", "Clinic created successfully", newClinic);
+            // Check if the clinic already exists
+            const existingClinic = await clinicService.getClinicByName(name);
+            if (existingClinic && existingClinic.name === name) {
+                const doctor = await doctorService.getDoctorById(new mongoose.Types.ObjectId(doctorId));
+                if (!doctor) {
+                    return response(res, 404, "fail", "Doctor not found");
+                }
+                if(doctor?.clinic?.id === existingClinic.id) {
+                    return response(res, 400, "fail", "Doctor already registered this Clinic");
+                }
+                doctor.clinic = existingClinic._id
+                await doctor.save();
+                if(doctor) {
+                    return response(res, 200, "success", "Clinic already exists,Doctor updated successfully");
+                }
+            }
+            
+            const newClinic = await clinicService.createClinic({ name, location, contact, services });
+            return response(res, 201, "success", "Clinic created successfully",  newClinic);
         } catch (error) {
-            logger.error(error);
+            console.log(error)
             return response(res, 500, "fail", "Error creating clinic");
         }
     }

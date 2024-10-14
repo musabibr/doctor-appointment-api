@@ -138,7 +138,7 @@ const emailService = require("../util/emailService");
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            maxAge: 3600000, // 1 hour
+            maxAge: 3600000*24*30, // 1 hour
         });
 
         req.patient = sanitizedPatient;

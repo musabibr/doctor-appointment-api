@@ -18,12 +18,7 @@ class ClinicService {
         if (data.name) filter['name'] = data.name;
         if (data.city) filter['location.city'] = data.city;
         if (data.state) filter['location.state'] = data.state;
-        if (data.specialties) filter.services = { $in: data.specialties.split(",") }; // Filter by specialties
-        if (data.day) {
-            filter[`operatingHours.${data.day}.open`] = { $lte: data.time };
-            filter[`operatingHours.${data.day}.close`] = { $gte: data.time };
-        }
-
+        if (data.specialties) filter.services = data.services; // Filter by services
         return await clinicRepository.getClinics(filter, page, limit, skip);
     }
 

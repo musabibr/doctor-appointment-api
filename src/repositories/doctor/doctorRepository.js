@@ -10,7 +10,8 @@ class DoctorRepository {
     
     // Find doctor by id
     async findDoctorById(id) {
-        return await Doctor.findById(id).populate({ 
+        return await Doctor.findById(id)
+            .populate({ 
             path: 'clinic', 
             select: 'name location', 
             populate: { 
