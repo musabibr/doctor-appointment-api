@@ -132,3 +132,6 @@ dist
 /public
 # Files uploaded through the API in local development
 /uploads/
+
+# MongoDB binaries downloaded for demo mode
+/.mongodb-binaries/

@@ -914,6 +914,48 @@ a.stat-card:hover { text-decoration: none; border-color: var(--primary); }
 }
 
 /* ==========================================================================
+   Demo mode
+   ========================================================================== */
+.demo-banner {
+  background: var(--warning-soft);
+  color: var(--text);
+  font-size: 0.86rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+}
+.demo-banner .container { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding-top: 8px; padding-bottom: 8px; }
+.demo-banner a { font-weight: 600; }
+
+.demo-logins {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 14px;
+  background: var(--primary-softer);
+}
+.demo-login-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.demo-login-grid .btn { justify-content: flex-start; white-space: normal; text-align: left; }
+
+.otp-display {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: var(--primary-softer);
+  color: var(--primary);
+  user-select: all;
+}
+.email-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: 0.86rem;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 8px 0 0;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 @media (max-width: 1000px) {
@@ -942,6 +984,7 @@ a.stat-card:hover { text-decoration: none; border-color: var(--primary); }
   .doctor-card { grid-template-columns: auto minmax(0, 1fr); }
   .doctor-card .side { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; text-align: left; }
   .slot-editor-row { grid-template-columns: 1fr 1fr; }
+  .demo-login-grid { grid-template-columns: minmax(0, 1fr); }
   .card { padding: 16px; }
   .hero { padding: 40px 0; }
   .appointment-actions { justify-content: flex-start; }

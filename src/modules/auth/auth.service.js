@@ -5,6 +5,7 @@ const { getAccountProvider } = require("../../shared/auth/accountRegistry");
 const { signToken } = require("../../shared/auth/token");
 const { encryptData, compareData, sha256, randomToken } = require("../../shared/utils/hash");
 const { sendOtp, sendPasswordReset } = require("../../shared/email/email");
+const { assertNotProtectedDemoAccount } = require("../../shared/demo/accounts");
 const otpRepository = require("./otp.repository");
 
 const MAX_OTP_ATTEMPTS = 5;
@@ -47,6 +48,7 @@ class AuthService {
         if (!account || !(await compareData(currentPassword, account.password))) {
             throw AppError.validation({ currentPassword: "Current password is incorrect" });
         }
+        assertNotProtectedDemoAccount(account.email, "change their password");
         await provider.setPassword(accountId, await encryptData(newPassword));
         // Other sessions are signed out; this one gets a fresh token.
         return session(await provider.findById(accountId), role);
@@ -58,6 +60,7 @@ class AuthService {
         if (!provider.canResetPassword) {
             throw AppError.badRequest("Password reset by email is not available for this account type");
         }
+        assertNotProtectedDemoAccount(email, "reset their password");
         const account = await provider.findByEmail(email);
         if (!account) return;
 

@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/context";
 import { APP_NAME } from "../lib/config";
 import { Alert, Avatar } from "./ui";
+import { DemoBanner } from "./Demo";
 
 const NAV = {
     guest: [{ to: "/doctors", label: "Find a doctor" }],
@@ -62,6 +63,7 @@ export default function Layout() {
             <a className="sr-only" href="#main">
                 Skip to content
             </a>
+            <DemoBanner />
             <header className={`site-header ${menuOpen ? "open" : ""}`}>
                 <div className="container">
                     <Link to="/" className="brand">

@@ -13,24 +13,70 @@ It is made of two apps in one repository:
 | REST API | Node.js · Express · MongoDB (Mongoose), organised as a **modular monolith** | [`/`](.) (`server.js`, `src/`) |
 | Web app | **React 19** · React Router 8 · Vite | [`client/`](client) |
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/musabibr/doctor-appointment-api?quickstart=1)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/musabibr/doctor-appointment-api)
+
+Want to try it without installing anything? See [Try it online](#try-it-online-no-installation).
+
 ![Home page](docs/screenshots/home.jpg)
 
 ---
 
 ## Contents
 
-1. [Quick start (5 minutes)](#quick-start-5-minutes)
-2. [Demo accounts](#demo-accounts)
-3. [Step-by-step setup](#step-by-step-setup)
-4. [Everyday commands](#everyday-commands)
-5. [How the app works](#how-the-app-works)
-6. [Architecture](#architecture)
-7. [API reference](#api-reference)
-8. [Configuration](#configuration)
-9. [Testing](#testing)
-10. [Deploying to production](#deploying-to-production)
-11. [Troubleshooting](#troubleshooting)
-12. [Roadmap](#roadmap)
+1. [Try it online (no installation)](#try-it-online-no-installation)
+2. [Quick start (5 minutes)](#quick-start-5-minutes)
+3. [Demo accounts](#demo-accounts)
+4. [Step-by-step setup](#step-by-step-setup)
+5. [Everyday commands](#everyday-commands)
+6. [How the app works](#how-the-app-works)
+7. [Architecture](#architecture)
+8. [API reference](#api-reference)
+9. [Configuration](#configuration)
+10. [Testing](#testing)
+11. [Deploying to production](#deploying-to-production)
+12. [Troubleshooting](#troubleshooting)
+13. [Roadmap](#roadmap)
+
+---
+
+## Try it online (no installation)
+
+Both options run the app in **demo mode**, so there is no database or email account to set up:
+
+- an embedded MongoDB, loaded with the demo doctors, patients, appointments and reviews;
+- **one-click demo logins** (patient, doctor, doctor awaiting approval, admin) on the login page;
+- a **Demo inbox** page that shows every email the app would send, so testers can read verification codes and open password-reset links;
+- the shared demo accounts can't have their password changed or be deleted, so testers can't lock each other out. Accounts that testers create themselves behave normally.
+
+### Option A: GitHub Codespaces (free with your GitHub account)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/musabibr/doctor-appointment-api?quickstart=1)
+
+1. Click the button, then **Create codespace**.
+2. Wait for the first build (about 3–5 minutes). It installs everything, builds the web app and downloads MongoDB.
+3. The app opens in a new browser tab. If it doesn't, open the **Ports** tab and click the 🌐 icon next to port **5000**.
+
+The app is private to your GitHub account. To let someone else test it, right-click port 5000 in the **Ports** tab → **Port Visibility** → **Public** and send them the link. GitHub stops idle codespaces automatically; personal accounts include a free monthly allowance.
+
+### Option B: Render (public link, free plan)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/musabibr/doctor-appointment-api)
+
+1. Click the button and sign in to Render (free; you can sign in with GitHub).
+2. Approve the blueprint ([`render.yaml`](render.yaml)). The first deploy takes about 5 minutes.
+3. Open the `https://doctorri-demo-….onrender.com` link Render gives you and share it with your testers.
+
+Good to know about Render's free plan: the service sleeps after 15 minutes without visitors, so the next visit takes about a minute to wake it up. Demo data is reloaded on every start and every 12 hours. To keep data permanently, add a `MONGODB_URI` environment variable (for example a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster) in the Render dashboard.
+
+### Option C: the demo on your own computer, without MongoDB
+
+```bash
+npm run setup
+npm run demo      # builds the web app and starts everything on http://localhost:5000
+```
+
+<img src="docs/screenshots/demo-login.jpg" alt="One-click demo logins" width="49%"> <img src="docs/screenshots/demo-inbox.jpg" alt="Demo inbox" width="49%">
 
 ---
 
@@ -162,6 +208,9 @@ Run them from the project root.
 | `npm run dev:all` | Run the API and the web app together (stop with Ctrl+C) |
 | `npm run dev` | Run only the API, restarting on file changes (`node --watch`) |
 | `npm run dev:client` | Run only the web app |
+| `npm run demo` | Build the web app and run everything in demo mode on http://localhost:5000 (embedded MongoDB, no setup) |
+| `npm run start:demo` | Start demo mode without building (used by Codespaces and Render) |
+| `npm run demo:prefetch` | Download the MongoDB binary used by demo mode ahead of time |
 | `npm run seed` | Load demo data (`-- --reset` wipes the database first) |
 | `npm run create-admin -- --email … --password … --name …` | Create an admin, or reset an admin's password |
 | `npm test` | Run the API test suite |
@@ -246,6 +295,7 @@ src/
 │   ├── reviews/              # Ratings, comments and reports
 │   ├── admin/                # Admin accounts and back-office endpoints
 │   └── notifications/        # Turns domain events into emails
+├── demo/                     # Demo mode tooling: embedded MongoDB, demo data, demo inbox routes
 └── shared/                   # Shared kernel, no business logic
     ├── auth/                 # JWT, `protect` middleware, account registry
     ├── config/               # Environment and database connection
@@ -291,6 +341,8 @@ Two more mechanisms keep the boundaries clean:
 
 - **Account registry.** `patients`, `doctors` and `admin` each register an *account provider* at start-up. The `protect` middleware and the `auth` module use it to log in or authorize any account type without importing those modules.
 - **Architecture test.** [`tests/architecture.test.js`](tests/architecture.test.js) fails the build if a module imports another module's internal files, if `shared/` imports a module, or if module dependencies form a cycle.
+
+`src/demo/` is tooling, like `scripts/`, rather than a product module: it loads the demo data straight into the models and is only loaded when `DEMO_MODE` is on.
 
 **Adding a module:** create `src/modules/<name>/` with an `index.js` that exports `{ name, routes, registerEventHandlers?, ...publicFunctions }`, then add it to the list in `src/modules/index.js`.
 
@@ -449,6 +501,9 @@ API variables go in `.env` at the project root (template: [`.env.example`](.env.
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | empty | Without them, uploads are saved in `./uploads` |
 | `UPLOAD_DIR` | `./uploads` | |
 | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | – | Defaults for `npm run create-admin` |
+| `DEMO_MODE` | `false` | Demo mode: demo data, one-click logins, Demo inbox, no real emails. Without `MONGODB_URI` it uses an embedded MongoDB. **Never enable it on real data.** |
+| `DEMO_RESET_HOURS` | `12` with the embedded database, otherwise `0` | How often demo data is wiped and reloaded (`0` = never) |
+| `PUBLIC_URL` | detected on Render and Codespaces | Public address used in email links when `CLIENT_URL` is not set |
 
 Web app variables go in `client/.env` (template: [`client/.env.example`](client/.env.example)):
 
@@ -466,7 +521,7 @@ Web app variables go in `client/.env` (template: [`client/.env.example`](client/
 npm test
 ```
 
-45 integration tests (Node's built-in test runner + Supertest) cover sign-up and sessions, password reset, doctor verification and approval, availability rules, search, the full appointment lifecycle including **simultaneous bookings**, ownership checks, reviews and reports, admin cascades, and the module boundaries.
+50 integration tests (Node's built-in test runner + Supertest) cover sign-up and sessions, password reset, doctor verification and approval, availability rules, search, the full appointment lifecycle including **simultaneous bookings**, ownership checks, reviews and reports, admin cascades, demo mode, and the module boundaries.
 
 Each test file gets a throw-away database:
 
@@ -516,6 +571,8 @@ To host the web app separately (Netlify, Vercel, S3…), build it with `VITE_API
 | "Too many requests" while testing | Wait 15 minutes, or raise `AUTH_RATE_LIMIT_MAX` in `.env` for local testing. |
 | Logged out unexpectedly | Logging out or changing the password signs you out on all devices: log in again. |
 | Data from an older version of this project behaves oddly | The data model changed (approval status, reviews, availability). Reset your local database with `npm run seed -- --reset`. |
+| Render: the first visit is very slow | Free services sleep after 15 minutes without visitors; waking up takes about a minute. |
+| Codespaces: the app tab didn't open | Open the **Ports** tab and click the 🌐 icon next to port 5000, or run `npm run start:demo` in the terminal. |
 | `npm test` is slow the first time | `mongodb-memory-server` is downloading MongoDB once. Use `TEST_MONGODB_URI` to skip it. |
 
 ---

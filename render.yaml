@@ -1,0 +1,32 @@
+# Render Blueprint: deploys a public demo of the app on Render's free plan.
+#
+# Use the "Deploy to Render" button in the README, or in the Render dashboard:
+# New > Blueprint > choose this repository.
+#
+# The service runs in demo mode with an embedded MongoDB, so no database account
+# is needed. Data lives in memory: it is reloaded on every start (free services
+# sleep after 15 minutes without visits) and every 12 hours.
+# For a persistent database, add a MONGODB_URI environment variable (e.g. MongoDB Atlas).
+services:
+  - type: web
+    name: doctorri-demo
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm --prefix client ci --include=dev && npm run build && npm run demo:prefetch
+    startCommand: npm run start:demo
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_TIMEZONE
+        value: Africa/Khartoum
+      # The binary is downloaded once by `npm run demo:prefetch` into the project folder.
+      - key: MONGOMS_DISABLE_POSTINSTALL
+        value: "1"

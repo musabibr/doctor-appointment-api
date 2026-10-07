@@ -12,6 +12,21 @@ const VIEWS_DIR = path.join(__dirname, "templates");
 // In tests, emails are collected here instead of being sent.
 const outbox = [];
 
+// In demo mode, emails are never sent: the newest ones are kept here and shown
+// in the web app's "Demo inbox" so testers can read codes and links.
+const DEMO_INBOX_SIZE = 50;
+const demoInbox = [];
+let demoEmailId = 0;
+
+const recentDemoEmails = ({ to } = {}) => {
+    const filter = String(to || "").trim().toLowerCase();
+    return filter ? demoInbox.filter((email) => email.to.toLowerCase().includes(filter)) : [...demoInbox];
+};
+
+const clearDemoInbox = () => {
+    demoInbox.length = 0;
+};
+
 const firstNameOf = (name = "") => String(name).trim().split(/\s+/)[0] || "there";
 
 const render = (template, locals) => {
@@ -34,8 +49,18 @@ const render = (template, locals) => {
 const send = async ({ to, subject, template, locals = {} }) => {
     const { html, text } = render(template, { subject, ...locals });
 
+    if (env.DEMO_MODE) {
+        demoInbox.unshift({ id: ++demoEmailId, to, subject, text, sentAt: new Date().toISOString() });
+        demoInbox.length = Math.min(demoInbox.length, DEMO_INBOX_SIZE);
+    }
+
     if (env.isTest) {
         outbox.push({ to, subject, template, locals, text });
+        return;
+    }
+
+    if (env.DEMO_MODE) {
+        logger.info(`Demo email to ${to}: "${subject}" (read it in the web app's Demo inbox)`);
         return;
     }
 
@@ -94,4 +119,4 @@ const sendNotification = (user, { subject, lines = [], actionUrl, actionLabel })
         locals: { firstName: firstNameOf(user.name), lines, actionUrl, actionLabel },
     });
 
-module.exports = { sendOtp, sendPasswordReset, sendWelcome, sendNotification, outbox };
+module.exports = { sendOtp, sendPasswordReset, sendWelcome, sendNotification, outbox, recentDemoEmails, clearDemoInbox };

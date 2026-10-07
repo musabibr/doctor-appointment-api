@@ -6,6 +6,7 @@ const { isDateKey, parseDateKey } = require("../../shared/utils/time");
 const { assertObjectId } = require("../../shared/utils/validation");
 const { saveFile, removeFile } = require("../../shared/storage/storage");
 const { parsePagination, paginated } = require("../../shared/http/pagination");
+const { assertNotProtectedDemoAccount } = require("../../shared/demo/accounts");
 const auth = require("../auth");
 const doctorRepository = require("./doctor.repository");
 const clinicRepository = require("./clinic.repository");
@@ -164,6 +165,7 @@ class DoctorService {
         assertObjectId(doctorId, "doctor id");
         const doctor = await doctorRepository.findByIdWithDocuments(doctorId);
         if (!doctor) throw AppError.notFound("Doctor not found");
+        assertNotProtectedDemoAccount(doctor.email, "be deleted");
 
         await doctorRepository.delete(doctorId);
         await clinicRepository.deleteByDoctor(doctorId);

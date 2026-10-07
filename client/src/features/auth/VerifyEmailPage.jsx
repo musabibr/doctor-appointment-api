@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/context";
 import { useToast } from "../../components/toast";
 import { Alert, Field, SubmitButton } from "../../components/ui";
 import { AuthShell, DevEmailHint } from "./AuthShell";
+import { DemoInboxHint } from "../../components/Demo";
 
 const COOLDOWN_SECONDS = 60;
 
@@ -72,6 +73,7 @@ export default function VerifyEmailPage() {
             }
         >
             {location.state?.message && !state.error && <Alert tone="info">{location.state.message}</Alert>}
+            <DemoInboxHint>This is a demo, so the code is not emailed.</DemoInboxHint>
             <form className="form" onSubmit={onSubmit} noValidate>
                 <Field label="Email" error={errors.email}>
                     {(props) => (

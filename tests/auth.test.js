@@ -160,6 +160,11 @@ describe("admin accounts", () => {
         assert.equal(res.status, 403);
     });
 
+    test("demo endpoints are off unless DEMO_MODE is set", async () => {
+        assert.equal((await api().get("/api/v1/demo")).status, 404);
+        assert.equal((await api().get("/api/v1/demo/emails")).status, 404);
+    });
+
     test("admins log in and see stats", async () => {
         const { token } = await helpers.createAdmin();
         const res = await api().get("/api/v1/admin/stats").set(bearer(token));

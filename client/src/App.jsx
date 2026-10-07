@@ -28,6 +28,7 @@ const AdminDoctorDetailPage = lazy(() => import("./features/admin/AdminDoctorDet
 const AdminPatientsPage = lazy(() => import("./features/admin/AdminPatientsPage"));
 const AdminAppointmentsPage = lazy(() => import("./features/admin/AdminAppointmentsPage"));
 const AdminReviewsPage = lazy(() => import("./features/admin/AdminReviewsPage"));
+const DemoInboxPage = lazy(() => import("./features/demo/DemoInboxPage"));
 
 const as = (role, element) => (
     <RequireRole role={role}>
@@ -65,6 +66,15 @@ export default function App() {
                 <Route path="admin/patients" element={as("admin", <AdminPatientsPage />)} />
                 <Route path="admin/appointments" element={as("admin", <AdminAppointmentsPage />)} />
                 <Route path="admin/reviews" element={as("admin", <AdminReviewsPage />)} />
+
+                <Route
+                    path="demo/inbox"
+                    element={
+                        <Suspense fallback={<PageLoader />}>
+                            <DemoInboxPage />
+                        </Suspense>
+                    }
+                />
 
                 <Route path="*" element={<NotFoundPage />} />
             </Route>

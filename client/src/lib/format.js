@@ -66,3 +66,15 @@ export const clinicLabel = (clinic) => {
     const city = clinic.location?.city;
     return city ? `${clinic.name} · ${city}` : clinic.name;
 };
+
+const relativeFormat = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
+
+export const formatRelativeTime = (iso) => {
+    const seconds = Math.round((new Date(iso).getTime() - Date.now()) / 1000);
+    if (Math.abs(seconds) < 45) return "just now";
+    const minutes = Math.round(seconds / 60);
+    if (Math.abs(minutes) < 60) return relativeFormat.format(minutes, "minute");
+    const hours = Math.round(minutes / 60);
+    if (Math.abs(hours) < 24) return relativeFormat.format(hours, "hour");
+    return relativeFormat.format(Math.round(hours / 24), "day");
+};

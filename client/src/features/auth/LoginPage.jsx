@@ -5,6 +5,7 @@ import { formError, useFormAction } from "../../lib/hooks";
 import { HOME_BY_ROLE, useAuth } from "../../auth/context";
 import { Alert, Field, SubmitButton } from "../../components/ui";
 import { AuthShell, PasswordInput, RoleSwitch } from "./AuthShell";
+import { DemoLogins } from "../../components/Demo";
 
 const ROLES = [
     ["patient", "Patient"],
@@ -56,6 +57,7 @@ export default function LoginPage() {
                 )
             }
         >
+            <DemoLogins next={next} />
             <RoleSwitch value={role} onChange={setRole} roles={ROLES} />
             <form className="form" onSubmit={onSubmit} noValidate>
                 <Field label="Email" error={state.fieldErrors?.email}>

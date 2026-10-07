@@ -4,6 +4,7 @@ const EVENTS = require("../../shared/events/events");
 const { encryptData } = require("../../shared/utils/hash");
 const { saveFile, removeFile } = require("../../shared/storage/storage");
 const { parsePagination, paginated } = require("../../shared/http/pagination");
+const { assertNotProtectedDemoAccount } = require("../../shared/demo/accounts");
 const patientRepository = require("./patient.repository");
 
 class PatientService {
@@ -60,6 +61,10 @@ class PatientService {
 
     // Other modules react to PATIENT_DELETED (appointments are canceled, reviews removed).
     async remove(patientId) {
+        const existing = await patientRepository.findById(patientId);
+        if (!existing) throw AppError.notFound("Patient not found");
+        assertNotProtectedDemoAccount(existing.email, "be deleted");
+
         const patient = await patientRepository.delete(patientId);
         if (!patient) throw AppError.notFound("Patient not found");
         await removeFile(patient.photo);

@@ -55,6 +55,7 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 app.use("/api", apiLimiter);
+if (env.DEMO_MODE) app.use("/api/v1/demo", require("./demo").router);
 mountRoutes(app);
 app.use("/api", notFound);
 

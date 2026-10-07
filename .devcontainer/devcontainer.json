@@ -1,0 +1,19 @@
+// GitHub Codespaces / VS Code Dev Containers: runs the full app in demo mode
+// (embedded MongoDB, sample data, one-click logins). No local setup needed.
+{
+  "name": "Doctorri demo",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" }
+  },
+  "hostRequirements": { "cpus": 2, "memory": "4gb" },
+  "postCreateCommand": "npm run setup && npm run build && npm run demo:prefetch",
+  "postAttachCommand": { "app": "npm run start:demo" },
+  "forwardPorts": [5000],
+  "portsAttributes": {
+    "5000": { "label": "Doctorri", "onAutoForward": "openBrowser" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] }
+  }
+}

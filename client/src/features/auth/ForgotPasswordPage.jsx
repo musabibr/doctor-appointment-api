@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { formError, useFormAction } from "../../lib/hooks";
 import { Alert, Field, SubmitButton } from "../../components/ui";
 import { AuthShell, DevEmailHint, RoleSwitch } from "./AuthShell";
+import { DemoInboxHint } from "../../components/Demo";
 
 export default function ForgotPasswordPage() {
     const [params] = useSearchParams();
@@ -34,6 +35,7 @@ export default function ForgotPasswordPage() {
                         If an account exists for that email, a reset link is on its way. The link is valid for 30 minutes.
                     </Alert>
                     <DevEmailHint>Running locally without SendGrid? The link is printed in the API terminal.</DevEmailHint>
+                    <DemoInboxHint>This is a demo, so the link is not emailed.</DemoInboxHint>
                 </>
             ) : (
                 <>
