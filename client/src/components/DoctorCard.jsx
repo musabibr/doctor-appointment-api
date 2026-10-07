@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { clinicLabel, formatDayLabel, formatMoney } from "../lib/format";
 import { Avatar, RatingText } from "./ui";
+import { MapPin } from "lucide-react";
 
 export function Price({ price, finalPrice, discount }) {
     if (!price) return <span className="muted small">Price on request</span>;
@@ -27,7 +28,12 @@ export default function DoctorCard({ doctor }) {
                         <RatingText average={doctor.ratingAverage} count={doctor.ratingCount} />
                     </div>
                 </div>
-                {doctor.clinic && <span className="muted small">📍 {clinicLabel(doctor.clinic)}</span>}
+                {doctor.clinic && (
+                    <span className="muted small with-icon">
+                        <MapPin aria-hidden="true" />
+                        {clinicLabel(doctor.clinic)}
+                    </span>
+                )}
                 {doctor.about && <p className="muted small clamp-2">{doctor.about}</p>}
             </div>
             <div className="side">

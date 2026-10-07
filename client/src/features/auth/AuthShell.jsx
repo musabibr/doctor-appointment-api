@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { pageTitle } from "../../lib/config";
+import { Info } from "lucide-react";
 
 export function AuthShell({ title, subtitle, children, footer, width = "narrow" }) {
     return (
@@ -58,5 +59,10 @@ export function RoleSwitch({ value, onChange, roles }) {
 
 export function DevEmailHint({ children }) {
     if (!import.meta.env.DEV) return null;
-    return <p className="muted tiny">💡 {children}</p>;
+    return (
+        <p className="muted tiny with-icon">
+            <Info aria-hidden="true" />
+            {children}
+        </p>
+    );
 }

@@ -4,6 +4,7 @@ import { useAuth } from "../auth/context";
 import { APP_NAME } from "../lib/config";
 import { Alert, Avatar } from "./ui";
 import { DemoBanner } from "./Demo";
+import { Menu, X } from "lucide-react";
 
 const NAV = {
     guest: [{ to: "/doctors", label: "Find a doctor" }],
@@ -78,7 +79,7 @@ export default function Layout() {
                         aria-label="Toggle menu"
                         onClick={() => setMenuOpenedAt(menuOpen ? null : location.pathname)}
                     >
-                        {menuOpen ? "✕" : "☰"}
+                        {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
                     </button>
 
                     <nav className="main-nav" aria-label="Main">

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { assetUrl } from "../lib/api";
 import { capitalize, initials } from "../lib/format";
+import { ChevronLeft, ChevronRight, Inbox, Star, X } from "lucide-react";
 
 export function Spinner({ label = "Loading" }) {
     return <span className="spinner" role="status" aria-label={label} />;
@@ -29,11 +30,12 @@ export function ErrorState({ error, onRetry }) {
     );
 }
 
-export function EmptyState({ icon = "○", title, children, action }) {
+// `icon` is a lucide-react icon component, e.g. icon={CalendarDays}.
+export function EmptyState({ icon: Icon = Inbox, title, children, action }) {
     return (
         <div className="card empty-state">
             <div className="icon" aria-hidden="true">
-                {icon}
+                {typeof Icon === "string" ? Icon : <Icon />}
             </div>
             <h3>{title}</h3>
             {children && <p className="muted">{children}</p>}
@@ -150,7 +152,7 @@ export function StarInput({ value, onChange }) {
                     className={n <= value ? "on" : ""}
                     onClick={() => onChange(n)}
                 >
-                    ★
+                    <Star aria-hidden="true" />
                 </button>
             ))}
         </div>
@@ -196,13 +198,15 @@ export function Pagination({ page, pages, onChange }) {
     return (
         <nav className="pagination" aria-label="Pagination">
             <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
-                ← Previous
+                <ChevronLeft aria-hidden="true" />
+                Previous
             </button>
             <span className="muted small">
                 Page {page} of {pages}
             </span>
             <button type="button" className="btn btn-secondary btn-sm" disabled={page >= pages} onClick={() => onChange(page + 1)}>
-                Next →
+                Next
+                <ChevronRight aria-hidden="true" />
             </button>
         </nav>
     );
@@ -239,7 +243,7 @@ export function Modal({ open, title, onClose, children, footer, bare = false }) 
                     <div className="modal-header">
                         <h2 id={titleId}>{title}</h2>
                         <button type="button" className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Close">
-                            ✕
+                            <X aria-hidden="true" />
                         </button>
                     </div>
                     {bare ? children : <div className="modal-body">{children}</div>}

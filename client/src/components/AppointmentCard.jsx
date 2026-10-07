@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { clinicLabel, formatDate, formatMoney, formatTime, formatTimeRange, toDateKey } from "../lib/format";
 import { appointmentTiming } from "../lib/appointments";
 import { Avatar, StatusBadge } from "./ui";
+import { CalendarDays, Clock, CreditCard } from "lucide-react";
 
 const LABELS = {
     patient: { pending: "Awaiting confirmation" },
@@ -73,9 +74,9 @@ export default function AppointmentCard({ appointment, viewer, children }) {
                         <StatusBadge status={timing.expired && appointment.status === "pending" ? "canceled" : appointment.status} label={label} />
                     </div>
                     <div className="appointment-meta">
-                        <span>🗓 {formatDate(appointment.appointmentDate)}</span>
-                        <span>🕘 {formatTimeRange(appointment.appointmentHour, appointment.endHour)}</span>
-                        {appointment.price > 0 && <span>💳 {formatMoney(appointment.price)}</span>}
+                        <span><CalendarDays aria-hidden="true" />{formatDate(appointment.appointmentDate)}</span>
+                        <span><Clock aria-hidden="true" />{formatTimeRange(appointment.appointmentHour, appointment.endHour)}</span>
+                        {appointment.price > 0 && <span><CreditCard aria-hidden="true" />{formatMoney(appointment.price)}</span>}
                     </div>
                 </div>
             </div>

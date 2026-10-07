@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { loadDemo } from "../lib/demo";
 import { HOME_BY_ROLE, useAuth } from "../auth/context";
 import { Alert, Spinner } from "./ui";
+import { ExternalLink, ShieldCheck, Stethoscope, UserRound } from "lucide-react";
 
 // Renders children(demo) only when the server runs in demo mode.
 function WhenDemo({ children }) {
@@ -16,6 +17,11 @@ const OnlyInDemo = ({ children }) => (
         <WhenDemo>{children}</WhenDemo>
     </Suspense>
 );
+
+const RoleIcon = ({ role }) => {
+    const Icon = ROLE_ICONS[role] || UserRound;
+    return <Icon aria-hidden="true" />;
+};
 
 export function DemoBanner() {
     return (
@@ -38,7 +44,7 @@ export function DemoBanner() {
     );
 }
 
-const ROLE_ICONS = { patient: "🧑", doctor: "🩺", admin: "🛡️" };
+const ROLE_ICONS = { patient: UserRound, doctor: Stethoscope, admin: ShieldCheck };
 
 function DemoLoginButtons({ accounts, next }) {
     const auth = useAuth();
@@ -79,7 +85,7 @@ function DemoLoginButtons({ accounts, next }) {
                         disabled={Boolean(pending)}
                         onClick={() => signIn(account)}
                     >
-                        {pending === account.email ? <Spinner /> : <span aria-hidden="true">{ROLE_ICONS[account.role]}</span>}
+                        {pending === account.email ? <Spinner /> : <RoleIcon role={account.role} />}
                         {account.label}
                     </button>
                 ))}
@@ -100,7 +106,7 @@ export function DemoInboxHint({ children }) {
                 <Alert tone="info">
                     {children}{" "}
                     <Link to="/demo/inbox" target="_blank">
-                        Open the demo inbox ↗
+                        Open the demo inbox <ExternalLink aria-hidden="true" className="inline-icon" />
                     </Link>
                 </Alert>
             )}
