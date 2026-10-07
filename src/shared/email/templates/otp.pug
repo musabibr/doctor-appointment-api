@@ -1,0 +1,9 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Use this code to verify your email address on #{appName}. It expires in 10 minutes.
+  h1.verify Verification code
+  h1.code #{code}
+  p If you did not create an account, you can safely ignore this email.
+  p - The #{appName} team

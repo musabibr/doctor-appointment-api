@@ -1,73 +1,70 @@
-require('./db_config/db');
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
-const cors = require('cors');
-const morgan = require('morgan');const rateLimit = require('express-rate-limit');
-const hpp = require('hpp');
-const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
-const bodyParser = require('body-parser');
-const patientRoutes = require('./routes/patientRoutes');
-const doctorRoutes = require('./routes/doctorRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const {redisClient} = require('./db_config/redis_config');
-//rate limit
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100000, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
+const cors = require("cors");
+const helmet = require("helmet");
+const hpp = require("hpp");
+const morgan = require("morgan");
+const mongoose = require("mongoose");
+const mongoSanitize = require("express-mongo-sanitize");
 
-//cors
-const allowedOrigins = [];
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (origin === 'http://127.0.0.1:5500/' || !origin) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-    credentials: true,//access-control-allow-credentials:true
-    allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',//access-control-allow-headers
-};
+const env = require("./shared/config/env");
+const { apiLimiter } = require("./shared/http/rateLimiters");
+const { notFound, errorHandler } = require("./shared/errors/errorHandler");
+const { mountRoutes } = require("./modules");
 
-//creating the app
+const CLIENT_DIST = path.join(__dirname, "..", "client", "dist");
+
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(cors({origin:'*', credentials: true}));
-app.use(helmet());
-app.use(hpp());
+app.set("trust proxy", env.TRUST_PROXY);
+
+app.use(
+    helmet({
+        // Images in /uploads are loaded by the web client from another origin in development.
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        // Applies to the built React app when the API serves it. Uploaded files may
+        // live on Cloudinary (https), and local HTTP runs must not be upgraded to HTTPS.
+        contentSecurityPolicy: {
+            directives: {
+                "img-src": ["'self'", "data:", "blob:", "https:"],
+                "frame-src": ["'self'", "https:"],
+                "upgrade-insecure-requests": env.isProduction ? [] : null,
+            },
+        },
+    })
+);
+app.use(
+    cors({
+        origin: (origin, callback) => callback(null, !origin || env.CLIENT_URLS.includes(origin)),
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    })
+);
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: false, limit: "100kb" }));
 app.use(mongoSanitize());
-app.use(morgan('dev'));
-app.use(limiter);
-app.use('/api/v1/patients', patientRoutes)
-app.use('/api/v1/doctors', doctorRoutes)
-app.use('/api/v1/admin',adminRoutes)
+app.use(hpp());
+if (!env.isTest) app.use(morgan(env.isProduction ? "combined" : "dev"));
 
+app.use("/uploads", express.static(env.UPLOAD_DIR, { index: false, maxAge: "7d" }));
 
-redisClient.connect();
-redisClient.on('connect', () => {
-    console.log('Redis connected');
-})
-redisClient.on('error', (err) => {
-    console.log('Redis connection error:', err);
+app.get("/api/v1/health", (req, res) => {
+    const database = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    res.status(database === "connected" ? 200 : 503).json({ status: "ok", database });
 });
 
-app.all('*', (req, res, next) => {
-    if (!res.headersSent) {
-        res.status(404 || 401).json({
-            status: 'fail',
-            method: `${req.method}`,
-            message: `Can't find ${req.originalUrl} on this server!`
-        });
-    }
-});
+app.use("/api", apiLimiter);
+mountRoutes(app);
+app.use("/api", notFound);
+
+// After `npm run build`, the API also serves the React app.
+if (fs.existsSync(path.join(CLIENT_DIST, "index.html"))) {
+    app.use(express.static(CLIENT_DIST, { index: false }));
+    app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => res.sendFile(path.join(CLIENT_DIST, "index.html")));
+}
+
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;
